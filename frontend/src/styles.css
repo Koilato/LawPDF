@@ -1,0 +1,140 @@
+:root {
+  color: #1e293b;
+  background:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.15), transparent 22%),
+    radial-gradient(circle at bottom right, rgba(180, 83, 9, 0.14), transparent 24%),
+    linear-gradient(180deg, #f5f1e8 0%, #f1ece2 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+}
+
+.app-layout {
+  min-height: 100vh;
+  background: transparent;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 28px;
+  height: auto;
+  line-height: 1.4;
+  background: rgba(255, 250, 240, 0.78);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.24);
+  backdrop-filter: blur(14px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topbar-title {
+  margin: 0 !important;
+  font-family: Georgia, Cambria, 'Times New Roman', serif;
+  color: #0f172a !important;
+}
+
+.topbar-subtitle {
+  display: block;
+  max-width: 720px;
+}
+
+.workspace-layout {
+  background: transparent;
+  gap: 18px;
+  padding: 18px;
+}
+
+.workspace-sider {
+  background: transparent !important;
+}
+
+.workspace-sider-left,
+.workspace-sider-right {
+  padding: 2px;
+}
+
+.workspace-content {
+  min-height: calc(100vh - 120px);
+}
+
+.panel-card,
+.workspace-sider .ant-card,
+.workspace-content .ant-card {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+  background: rgba(255, 252, 247, 0.92);
+}
+
+.content-tabs > .ant-tabs-nav {
+  margin-bottom: 16px;
+}
+
+.content-tabs .ant-tabs-tab {
+  font-weight: 600;
+}
+
+.split-grid {
+  display: grid;
+}
+
+.two-columns {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.compact-gap {
+  gap: 12px;
+}
+
+.three-columns {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1280px) {
+  .workspace-layout {
+    display: block;
+  }
+
+  .workspace-sider-left,
+  .workspace-sider-right {
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
+  .workspace-content {
+    margin: 16px 0;
+  }
+}
+
+@media (max-width: 920px) {
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .two-columns,
+  .three-columns {
+    grid-template-columns: 1fr;
+  }
+}

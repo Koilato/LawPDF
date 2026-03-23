@@ -1,0 +1,5 @@
+﻿version: "2"
+tunnels:
+  backend:
+    proto: http
+    addr: 8000

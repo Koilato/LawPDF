@@ -1,0 +1,6 @@
+﻿version: "2"
+web_addr: 127.0.0.1:4041
+tunnels:
+  frontend:
+    proto: http
+    addr: 5173

@@ -1,0 +1,17 @@
+.conda/
+__pycache__/
+*.pyc
+cases/*
+!cases/.gitkeep
+backend/storage/uploads/*
+!backend/storage/uploads/.gitkeep
+backend/storage/temp/*
+!backend/storage/temp/.gitkeep
+backend/storage/outputs/*
+!backend/storage/outputs/.gitkeep
+backend/storage/cases/*
+!backend/storage/cases/.gitkeep
+frontend/node_modules/
+frontend/dist/
+frontend/*.log
+frontend/*.tsbuildinfo

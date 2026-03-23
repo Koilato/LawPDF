@@ -1,0 +1,70 @@
+
+{
+  "schema_version": "1.0",
+  "name": "企业名称关键词条件字段规则",
+  "description": "根据企业名称是否包含目标关键词，推导案由、不正当竞争诉请和事实段。",
+  "conditions": {
+    "企业名称包含目标关键词": {
+      "type": "contains",
+      "source": "Defandent",
+      "path": ["企业名称", 0, "value"],
+      "value_from_param": "target_keyword"
+    }
+  },
+  "outputs": {
+    "案由": {
+      "when": "企业名称包含目标关键词",
+      "true": {"mode": "literal", "value": "侵害商标权及不正当竞争纠纷"},
+      "false": {"mode": "literal", "value": "侵害商标权纠纷"}
+    },
+    "逻辑判断1": {
+      "when": "企业名称包含目标关键词",
+      "true": {"mode": "literal", "value": "侵害商标权及不正当竞争纠纷"},
+      "false": {"mode": "literal", "value": "侵害商标权纠纷"}
+    },
+    "诉讼请求三": {
+      "when": "企业名称包含目标关键词",
+      "true": {
+        "mode": "template",
+        "template": "三、判令被告立即停止不正当竞争行为，即立即变更企业名称，变更后的企业名称中不得含有“{{target_keyword}}”文字；",
+        "vars": {
+          "target_keyword": {"mode": "param", "name": "target_keyword"}
+        }
+      },
+      "false": {"mode": "literal", "value": ""}
+    },
+    "逻辑判断2": {
+      "when": "企业名称包含目标关键词",
+      "true": {
+        "mode": "template",
+        "template": "三、判令被告立即停止不正当竞争行为，即立即变更企业名称，变更后的企业名称中不得含有“{{target_keyword}}”文字；",
+        "vars": {
+          "target_keyword": {"mode": "param", "name": "target_keyword"}
+        }
+      },
+      "false": {"mode": "literal", "value": ""}
+    },
+    "不正当竞争事实段": {
+      "when": "企业名称包含目标关键词",
+      "true": {
+        "mode": "template",
+        "template": "另外，被告自{{成立日期}}开始，将“{{target_keyword}}”文字作为其企业名称的字号使用并持续至今，用于案涉眼镜店的经营，构成了不正当竞争。",
+        "vars": {
+          "成立日期": {
+            "mode": "path",
+            "source": "Defandent",
+            "path": ["成立日期", 0, "value"],
+            "default": ""
+          },
+          "target_keyword": {"mode": "param", "name": "target_keyword"}
+        }
+      },
+      "false": {"mode": "literal", "value": ""}
+    },
+    "逻辑判断3": {
+      "when": "企业名称包含目标关键词",
+      "true": {"mode": "literal", "value": "，构成了不正当竞争"},
+      "false": {"mode": "literal", "value": ""}
+    }
+  }
+}
