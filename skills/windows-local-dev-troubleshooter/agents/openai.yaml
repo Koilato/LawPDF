@@ -1,0 +1,4 @@
+interface:
+  display_name: "Windows Dev Triage"
+  short_description: "Diagnose Windows local coding and startup issues"
+  default_prompt: "Use $windows-local-dev-troubleshooter to diagnose a Windows project that fails due to encoding, interpreter, startup, or packaging issues."

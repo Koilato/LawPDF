@@ -21,3 +21,4 @@ logs/*
 
 *.log
 *.bundle
+exports/codex_threads/

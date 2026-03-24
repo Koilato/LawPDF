@@ -1,4 +1,4 @@
-"""Classify lawyer-letter paragraphs and rewrite infringement facts."""
+"""Extract structured infringement facts from lawyer-letter markdown."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import re
 import sys
 from pathlib import Path
 from typing import Any
+
 import openai
 from openai import OpenAI
 
@@ -17,6 +18,8 @@ DEFAULT_API_URL = "http://104.168.109.197:8317/v1"
 DEFAULT_API_KEY = "sk-001"
 DEFAULT_API_MODEL = "gpt-5.1"
 VALID_CATEGORIES = {"引言", "权利基础", "侵权事实", "法律评价", "整改要求", "结尾", "其他"}
+FACT_SOURCE_CATEGORIES = {"侵权事实", "法律评价"}
+VALID_FACT_JUDGMENTS = {"客观事实", "混合法律评价", "非客观事实"}
 
 
 # Read markdown.
@@ -34,6 +37,47 @@ def clean_text(text: str) -> str:
     return value
 
 
+def clean_string_list(value: Any) -> list[str]:
+    if isinstance(value, str):
+        value = [value]
+    if not isinstance(value, list):
+        return []
+
+    cleaned: list[str] = []
+    for item in value:
+        if not isinstance(item, str):
+            continue
+        normalized = clean_text(item)
+        if normalized:
+            cleaned.append(normalized)
+    return cleaned
+
+
+def finalize_sentence(text: str) -> str:
+    value = clean_text(text)
+    if not value:
+        return ""
+    value = re.sub(r"[；。]+$", "", value)
+    return f"{value}。"
+
+
+def join_sentences(values: list[str]) -> str:
+    parts = [re.sub(r"[；。]+$", "", clean_text(value)) for value in values if clean_text(value)]
+    if not parts:
+        return ""
+    if len(parts) == 1:
+        return f"{parts[0]}。"
+    return "；".join(parts) + "。"
+
+
+def fallback_rewrite_value(source_text: str) -> str:
+    value = clean_text(source_text)
+    value = re.sub(r"^近日，据[^，。]+反馈，", "", value)
+    value = value.replace("你方", "其")
+    value = value.replace("贵方", "其")
+    return finalize_sentence(value)
+
+
 # Split paragraphs.
 def split_paragraphs(markdown: str) -> list[dict[str, Any]]:
     paragraphs: list[dict[str, Any]] = []
@@ -47,10 +91,12 @@ def split_paragraphs(markdown: str) -> list[dict[str, Any]]:
         buffer.clear()
         if not text:
             return
-        paragraphs.append({
-            "paragraph_id": len(paragraphs) + 1,
-            "text": text,
-        })
+        paragraphs.append(
+            {
+                "paragraph_id": len(paragraphs) + 1,
+                "text": text,
+            }
+        )
 
     for raw_line in markdown.splitlines():
         stripped = raw_line.strip()
@@ -221,8 +267,9 @@ def classify_paragraphs(
         "你是法律文书段落分类助手。"
         "你的任务是对律师函段落进行单标签分类。"
         "标签只能是：引言、权利基础、侵权事实、法律评价、整改要求、结尾、其他。"
-        "其中，侵权事实只包含对方客观实施了什么行为、在哪里实施、使用了什么标识、用于什么载体。"
-        "商标权归属、法律评价、涉嫌侵权、不正当竞争判断、停止侵权要求、赔偿要求都不能归为侵权事实。"
+        "其中，侵权事实是指律师函中对相对方客观行为的事实陈述，包括但不限于实施了什么行为、针对什么对象、在何处或何渠道、使用了什么标识/作品/商品/技术、用于什么载体、何时实施等。"
+        "如果一个段落同时包含客观行为事实和少量法律评价，但仍能清楚识别出具体行为事实，应优先归为侵权事实。"
+        "只有当段落主要内容是权利归属、法律分析、涉嫌侵权或不正当竞争判断、停止侵权要求、赔偿要求时，才不要归为侵权事实。"
         "只返回 JSON，不要输出解释。"
     )
 
@@ -231,9 +278,7 @@ def classify_paragraphs(
             "task": "classify_paragraphs",
             "paragraphs": paragraphs,
             "output_schema": {
-                "paragraphs": [
-                    {"paragraph_id": 1, "category": "侵权事实"}
-                ]
+                "paragraphs": [{"paragraph_id": 1, "category": "侵权事实"}]
             },
         },
         ensure_ascii=False,
@@ -274,42 +319,56 @@ def classify_paragraphs(
     return classified
 
 
-# Extract fact components.
-def extract_fact_components(
-    selected_paragraphs: list[dict[str, Any]],
+# Extract structured fact judgments.
+def extract_fact_judgments(
+    candidate_paragraphs: list[dict[str, Any]],
     api_url: str,
     api_key: str,
     model: str,
     debug_store: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
-    if not selected_paragraphs:
+    if not candidate_paragraphs:
         return []
 
     system_prompt = (
-        "你是法律事实拆分助手。"
-        "你只可以基于输入的侵权事实段落，拆分出其中的客观子事实。"
-        "重点拆分两个槽位：商标使用事实原文、字号使用事实原文。"
+        "你是法律事实结构化助手。"
+        "你只可以基于输入的律师函段落，拆分出其中可用于后续侵权事实判断的客观事实项。"
+        "这里的侵权事实是律师函提出的行为指控，不等于已经成立的法律侵权结论。"
         "要求："
         "1. 只能摘录或轻微整理原句，不得加入新事实；"
-        "2. 商标使用事实原文只保留经营活动中使用标识的事实；"
-        "3. 字号使用事实原文只保留企业名称/字号使用的事实；"
-        "4. 如果某个槽位不存在，返回空字符串；"
-        "5. 只返回 JSON。"
+        "2. 一个段落可以拆成多条事实项；"
+        "3. 请把客观事实与法律评价严格区分；如原段落夹带“涉嫌侵权”“构成不正当竞争”等结论词，应在判断中体现，但不要把这些结论词写进客观事实原文；"
+        "4. 判断只能是：客观事实、混合法律评价、非客观事实；"
+        "5. 事实类型可从：标识使用、名称/字号使用、商品销售、宣传推广、制造/提供服务、网络展示、著作权使用、专利/技术实施、其他 中选择最贴近的一项；"
+        "6. 涉案对象填写原文中的标识、作品、商品、技术、企业名称或其他争议对象，没有则返回空数组；"
+        "7. 场所/渠道/载体填写门店、网页、包装、招牌、订单、宣传物料等，没有则返回空数组；"
+        "8. 时间没有就返回空字符串；"
+        "9. 只返回 JSON。"
     )
 
     user_prompt = json.dumps(
         {
-            "task": "extract_fact_components",
-            "paragraphs": selected_paragraphs,
+            "task": "extract_fact_judgments",
+            "paragraphs": candidate_paragraphs,
             "output_schema": {
-                "侵权事实拆分": [
+                "侵权事实判断": [
                     {
+                        "fact_id": "3-1",
                         "paragraph_id": 3,
-                        "商标使用事实原文": "你方在该店铺的门店招牌、店内装饰装潢、眼镜配镜订单等经营场所和经营活动上面，使用了\"老光明\"标识",
-                        "字号使用事实原文": "你方企业名称中也含有\"老光明\"字号"
+                        "判断": "客观事实",
+                        "判断理由": "该片段描述了被函告方实施的具体行为、对象和载体，不包含独立法律结论。",
+                        "事实类型": "标识使用",
+                        "客观事实原文": "你方在门店招牌、包装袋等载体上使用了\"XX\"标识",
+                        "行为主体": "你方",
+                        "行为动作": "使用",
+                        "行为对象": "\"XX\"标识",
+                        "涉案对象": ["XX"],
+                        "场所/渠道/载体": ["门店招牌", "包装袋"],
+                        "时间": "",
+                        "source_text": "原段落全文"
                     }
                 ]
-            }
+            },
         },
         ensure_ascii=False,
         indent=2,
@@ -324,26 +383,48 @@ def extract_fact_components(
             {"role": "user", "content": user_prompt},
         ],
         temperature=0.0,
-        debug_label="extract_fact_components",
+        debug_label="extract_fact_judgments",
         debug_store=debug_store,
     )
     parsed = parse_json_response(content)
-    result_items = parsed.get("侵权事实拆分") or []
+    result_items = parsed.get("侵权事实判断") or []
 
-    source_map = {item["paragraph_id"]: item["text"] for item in selected_paragraphs}
+    source_map = {item["paragraph_id"]: item["text"] for item in candidate_paragraphs}
+    sequence_map: dict[int, int] = {}
     extracted: list[dict[str, Any]] = []
     for item in result_items:
         paragraph_id = item.get("paragraph_id")
         if not isinstance(paragraph_id, int) or paragraph_id not in source_map:
             continue
-        trademark_fact = item.get("商标使用事实原文", "")
-        trade_name_fact = item.get("字号使用事实原文", "")
+
+        sequence_map[paragraph_id] = sequence_map.get(paragraph_id, 0) + 1
+        fact_id = item.get("fact_id")
+        if not isinstance(fact_id, str) or not fact_id.strip():
+            fact_id = f"{paragraph_id}-{sequence_map[paragraph_id]}"
+
+        objective_text = item.get("客观事实原文", "")
+        normalized_objective_text = clean_text(objective_text) if isinstance(objective_text, str) else ""
+
+        judgment = item.get("判断")
+        if judgment not in VALID_FACT_JUDGMENTS:
+            judgment = "客观事实" if normalized_objective_text else "非客观事实"
+
+        source_text = item.get("source_text")
         extracted.append(
             {
+                "fact_id": clean_text(fact_id),
                 "paragraph_id": paragraph_id,
-                "source_text": source_map[paragraph_id],
-                "商标使用事实原文": clean_text(trademark_fact) if isinstance(trademark_fact, str) else "",
-                "字号使用事实原文": clean_text(trade_name_fact) if isinstance(trade_name_fact, str) else "",
+                "判断": judgment,
+                "判断理由": clean_text(item.get("判断理由", "")) if isinstance(item.get("判断理由"), str) else "",
+                "事实类型": clean_text(item.get("事实类型", "")) if isinstance(item.get("事实类型"), str) else "其他",
+                "客观事实原文": normalized_objective_text,
+                "行为主体": clean_text(item.get("行为主体", "")) if isinstance(item.get("行为主体"), str) else "",
+                "行为动作": clean_text(item.get("行为动作", "")) if isinstance(item.get("行为动作"), str) else "",
+                "行为对象": clean_text(item.get("行为对象", "")) if isinstance(item.get("行为对象"), str) else "",
+                "涉案对象": clean_string_list(item.get("涉案对象")),
+                "场所/渠道/载体": clean_string_list(item.get("场所/渠道/载体")),
+                "时间": clean_text(item.get("时间", "")) if isinstance(item.get("时间"), str) else "",
+                "source_text": clean_text(source_text) if isinstance(source_text, str) and source_text.strip() else source_map[paragraph_id],
             }
         )
     return extracted
@@ -351,38 +432,49 @@ def extract_fact_components(
 
 # Rewrite infringement facts.
 def rewrite_infringement_facts(
-    fact_components: list[dict[str, Any]],
+    fact_judgments: list[dict[str, Any]],
     source_name: str,
     api_url: str,
     api_key: str,
     model: str,
     debug_store: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
+    preferred_judgments = [
+        item
+        for item in fact_judgments
+        if item.get("判断") == "客观事实" and item.get("客观事实原文")
+    ]
+    if not preferred_judgments:
+        preferred_judgments = [
+            item
+            for item in fact_judgments
+            if item.get("判断") == "混合法律评价" and item.get("客观事实原文")
+        ]
+
     rewrite_inputs = []
-    for item in fact_components:
-        trademark_fact = item.get("商标使用事实原文") or ""
-        if trademark_fact:
-            rewrite_inputs.append(
-                {
-                    "paragraph_id": item["paragraph_id"],
-                    "source_text": trademark_fact,
-                }
-            )
+    for item in preferred_judgments:
+        objective_fact = item.get("客观事实原文") or ""
+        rewrite_inputs.append(
+            {
+                "fact_id": item["fact_id"],
+                "paragraph_id": item["paragraph_id"],
+                "source_text": objective_fact,
+            }
+        )
 
     if not rewrite_inputs:
         return []
 
     system_prompt = (
-        "你是法律文书事实改写助手。"
-        "你只可以基于输入的商标使用事实原文进行轻度改写。"
-        "目标是生成适合起诉状使用的客观事实表述。"
+        "你是法律文书事实归纳助手。"
+        "你只可以基于输入的客观事实原文进行轻度改写。"
+        "目标是生成适合起诉状“事实与理由”部分使用的中性客观表述。"
         "必须遵守以下规则："
-        "1. 只能保留客观行为事实，不能加入法律评价、涉嫌、侵权、不正当竞争等结论；"
-        "2. 用第三人称表述，可将你方改为其；"
-        "3. 不要再加入企业字号使用事实；"
-        "4. 当原文标识为老光明时，可归一表述为光明；"
-        "5. 优先使用句式：其在经营眼镜店的A、B、C等上面，大量使用了“光明”作为商标标识。"
-        "6. 必须保留 source_text 原文。"
+        "1. 只能保留客观行为事实，不能加入法律评价、涉嫌、侵权、违法、不正当竞争等结论；"
+        "2. 尽量使用第三人称表述，可将“你方”改为“其”；"
+        "3. 不得擅自归一化、替换或删改争议对象名称；原文写什么就保留什么；"
+        "4. 尽量保留行为、对象、场所或渠道、载体、时间等关键事实；"
+        "5. 必须保留 fact_id、paragraph_id 和 source_text 原文。"
         "只返回 JSON，不要输出解释。"
     )
 
@@ -393,12 +485,13 @@ def rewrite_infringement_facts(
             "output_schema": {
                 "侵权事实": [
                     {
+                        "fact_id": "3-1",
                         "paragraph_id": 3,
-                        "value": "其在经营眼镜店的门店招牌、店内装饰装潢、眼镜配镜订单等上面，大量使用了“光明”作为商标标识。",
-                        "source_text": "你方在该店铺的门店招牌、店内装饰装潢、眼镜配镜订单等经营场所和经营活动上面，使用了\"老光明\"标识"
+                        "value": "其在门店招牌、包装袋等载体上使用了\"XX\"标识。",
+                        "source_text": "你方在门店招牌、包装袋等载体上使用了\"XX\"标识"
                     }
                 ]
-            }
+            },
         },
         ensure_ascii=False,
         indent=2,
@@ -419,25 +512,58 @@ def rewrite_infringement_facts(
     parsed = parse_json_response(content)
     result_items = parsed.get("侵权事实") or []
 
-    source_map = {item["paragraph_id"]: item["source_text"] for item in rewrite_inputs}
+    source_map = {item["fact_id"]: item for item in rewrite_inputs}
     rewritten: list[dict[str, Any]] = []
+    seen_fact_ids: set[str] = set()
     for item in result_items:
         paragraph_id = item.get("paragraph_id")
         value = item.get("value")
         source_text = item.get("source_text")
+        fact_id = item.get("fact_id")
         if not isinstance(paragraph_id, int) or not isinstance(value, str):
             continue
-        if paragraph_id not in source_map:
+        if not isinstance(fact_id, str) or fact_id not in source_map:
             continue
+        source_item = source_map[fact_id]
+        seen_fact_ids.add(fact_id)
         rewritten.append(
             {
-                "value": clean_text(value),
+                "fact_id": clean_text(fact_id),
+                "value": finalize_sentence(value),
                 "source": source_name,
-                "source_text": clean_text(source_text) if isinstance(source_text, str) else source_map[paragraph_id],
+                "source_text": clean_text(source_text) if isinstance(source_text, str) and source_text.strip() else source_item["source_text"],
                 "paragraph_id": paragraph_id,
             }
         )
+
+    for item in rewrite_inputs:
+        if item["fact_id"] in seen_fact_ids:
+            continue
+        rewritten.append(
+            {
+                "fact_id": item["fact_id"],
+                "value": fallback_rewrite_value(item["source_text"]),
+                "source": source_name,
+                "source_text": item["source_text"],
+                "paragraph_id": item["paragraph_id"],
+            }
+        )
     return rewritten
+
+
+def build_fact_summary(rewritten_facts: list[dict[str, Any]], source_name: str) -> list[dict[str, Any]]:
+    if not rewritten_facts:
+        return []
+
+    return [
+        {
+            "value": join_sentences([item["value"] for item in rewritten_facts]),
+            "source": source_name,
+            "source_text": join_sentences([item["source_text"] for item in rewritten_facts]),
+            "paragraph_ids": sorted({item["paragraph_id"] for item in rewritten_facts}),
+            "fact_ids": [item["fact_id"] for item in rewritten_facts],
+        }
+    ]
 
 
 # Build output.
@@ -452,17 +578,19 @@ def build_output(
     paragraphs = split_paragraphs(markdown)
     debug_store: list[dict[str, Any]] | None = [] if include_debug else None
     classified = classify_paragraphs(paragraphs, api_url, api_key, model, debug_store)
-    selected = [item for item in classified if item["category"] == "侵权事实"]
-    fact_components = extract_fact_components(selected, api_url, api_key, model, debug_store)
-    rewritten = rewrite_infringement_facts(fact_components, input_path.name, api_url, api_key, model, debug_store)
+    selected = [item for item in classified if item["category"] in FACT_SOURCE_CATEGORIES]
+    fact_judgments = extract_fact_judgments(selected, api_url, api_key, model, debug_store)
+    rewritten_details = rewrite_infringement_facts(fact_judgments, input_path.name, api_url, api_key, model, debug_store)
+    rewritten_summary = build_fact_summary(rewritten_details, input_path.name)
 
     result = {
-        "侵权事实": rewritten,
+        "侵权事实": rewritten_summary,
+        "侵权事实明细": rewritten_details,
         "中间结果": {
             "source": input_path.name,
             "paragraphs": classified,
-            "selected_categories": ["侵权事实"],
-            "侵权事实拆分": fact_components,
+            "selected_categories": sorted(FACT_SOURCE_CATEGORIES),
+            "侵权事实判断": fact_judgments,
         },
     }
     if include_debug:
@@ -472,7 +600,7 @@ def build_output(
 
 # Parse args.
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Classify lawyer-letter paragraphs and rewrite infringement facts.")
+    parser = argparse.ArgumentParser(description="Extract structured infringement facts from lawyer-letter markdown.")
     parser.add_argument("--input", required=True, help="Path to the cleaned lawyer-letter markdown file.")
     parser.add_argument("--output", help="Optional path to write JSON. Prints to stdout if omitted.")
     parser.add_argument(
@@ -533,4 +661,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
