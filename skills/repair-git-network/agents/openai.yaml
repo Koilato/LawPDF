@@ -1,0 +1,4 @@
+interface:
+  display_name: "Repair Git Network"
+  short_description: "Recover Git after proxy or TUN changes"
+  default_prompt: "Use $repair-git-network to diagnose and recover Git connectivity on Windows when proxy or TUN mode changes."

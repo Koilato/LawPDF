@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>项目代码理解课本</title>
+  <style>
+@page {
+  size: A4;
+  margin: 18mm 16mm 20mm 16mm;
+}
+:root {
+  --text: #1f2937;
+  --muted: #5b6472;
+  --line: #d8dee9;
+  --paper: #ffffff;
+  --ink-soft: #f6f7fb;
+  --accent: #0f766e;
+  --accent-soft: #e6f4f1;
+}
+html {
+  background: #dfe6ee;
+}
+body {
+  margin: 0;
+  color: var(--text);
+  background: var(--paper);
+  font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+  line-height: 1.72;
+  font-size: 12pt;
+}
+.cover {
+  min-height: 240mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #f3f7f7 0%, #ffffff 100%);
+}
+.cover-inner {
+  width: 100%;
+  padding: 24mm 12mm;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.92);
+}
+.cover-kicker {
+  color: var(--accent);
+  font-size: 12pt;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+h1 {
+  font-size: 28pt;
+  line-height: 1.2;
+  margin: 10mm 0 4mm;
+}
+.subtitle {
+  font-size: 15pt;
+  color: var(--muted);
+  margin: 0 0 10mm;
+}
+.cover-note {
+  color: var(--muted);
+  font-size: 11pt;
+}
+.page-break {
+  break-before: page;
+}
+main {
+  padding-top: 2mm;
+}
+h2 {
+  break-before: page;
+  font-size: 20pt;
+  margin: 12mm 0 5mm;
+  padding-bottom: 2mm;
+  border-bottom: 2px solid var(--accent-soft);
+}
+h2:first-of-type {
+  break-before: auto;
+}
+h3 {
+  font-size: 15pt;
+  margin: 7mm 0 2mm;
+  color: #0b4f4a;
+}
+h4, h5, h6 {
+  font-size: 12.5pt;
+  margin: 5mm 0 2mm;
+}
+p {
+  margin: 0 0 3.2mm;
+}
+ul, ol {
+  margin: 0 0 4mm 6mm;
+  padding-left: 6mm;
+}
+li {
+  margin: 1.2mm 0;
+}
+code {
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 10.5pt;
+  background: var(--ink-soft);
+  border-radius: 4px;
+  padding: 0.12em 0.32em;
+}
+pre {
+  background: #0f172a;
+  color: #e5edf8;
+  border-radius: 10px;
+  padding: 4mm 4.5mm;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 10pt;
+  line-height: 1.55;
+  margin: 0 0 4mm;
+}
+pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 6mm 0;
+}
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.toc {
+  min-height: 240mm;
+}
+.toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 8mm 0 0;
+}
+.toc-list li {
+  padding: 1.6mm 0;
+  border-bottom: 1px dashed #e4e8ee;
+}
+.toc-h2 {
+  font-weight: 600;
+}
+.toc-h3 {
+  padding-left: 6mm;
+  color: var(--muted);
+  font-size: 11pt;
+}
+strong {
+  font-weight: 700;
+}
+@media print {
+  html {
+    background: white;
+  }
+  body {
+    background: white;
+  }
+}
+</style>
+</head>
+<body>
+<section class="cover"><div class="cover-inner"><div class="cover-kicker">Study</div><h1>项目代码理解课本</h1><p class="subtitle">用 Python 视角理解这个项目的前端、后端和业务流水线</p><p class="cover-note">自动从 Markdown 导出，适合继续扩写后再打印为 PDF。</p></div></section><section class="toc page-break"><h2>目录</h2><ul class="toc-list"><li class="toc-h2"><a href="#section-1">这份文件是给谁的</a></li><li class="toc-h2"><a href="#section-2">这份文件怎么用</a></li><li class="toc-h2"><a href="#section-3">全书总图</a></li><li class="toc-h2"><a href="#section-4">第一课：先把整个项目看成一条流水线</a></li><li class="toc-h3"><a href="#section-5">知识点</a></li><li class="toc-h3"><a href="#section-6">原理</a></li><li class="toc-h3"><a href="#section-7">本项目代码示例</a></li><li class="toc-h3"><a href="#section-9">这一课先记住</a></li><li class="toc-h2"><a href="#section-10">第二课：为什么这个项目需要前端</a></li><li class="toc-h3"><a href="#section-11">知识点</a></li><li class="toc-h3"><a href="#section-12">原理</a></li><li class="toc-h3"><a href="#section-13">本项目代码示例</a></li><li class="toc-h3"><a href="#section-14">这一课先记住</a></li><li class="toc-h2"><a href="#section-15">第三课：TypeScript 是什么</a></li><li class="toc-h3"><a href="#section-16">知识点</a></li><li class="toc-h3"><a href="#section-17">原理</a></li><li class="toc-h3"><a href="#section-18">本项目代码示例</a></li><li class="toc-h3"><a href="#section-19">这一课先记住</a></li><li class="toc-h2"><a href="#section-20">第四课：React 是什么</a></li><li class="toc-h3"><a href="#section-21">知识点</a></li><li class="toc-h3"><a href="#section-22">原理</a></li><li class="toc-h3"><a href="#section-23">本项目代码示例</a></li><li class="toc-h3"><a href="#section-24">这一课先记住</a></li><li class="toc-h2"><a href="#section-25">第五课：组件是什么</a></li><li class="toc-h3"><a href="#section-26">知识点</a></li><li class="toc-h3"><a href="#section-27">原理</a></li><li class="toc-h3"><a href="#section-28">本项目代码示例</a></li><li class="toc-h3"><a href="#section-29">这一课先记住</a></li><li class="toc-h2"><a href="#section-30">第六课：页面状态为什么重要</a></li><li class="toc-h3"><a href="#section-31">知识点</a></li><li class="toc-h3"><a href="#section-32">原理</a></li><li class="toc-h3"><a href="#section-33">本项目代码示例</a></li><li class="toc-h3"><a href="#section-34">这一课先记住</a></li><li class="toc-h2"><a href="#section-35">第七课：前端怎样请求后端</a></li><li class="toc-h3"><a href="#section-36">知识点</a></li><li class="toc-h3"><a href="#section-37">原理</a></li><li class="toc-h3"><a href="#section-38">本项目代码示例</a></li><li class="toc-h3"><a href="#section-39">这一课先记住</a></li><li class="toc-h2"><a href="#section-40">第八课：为什么前端要把文件转成 base64</a></li><li class="toc-h3"><a href="#section-41">知识点</a></li><li class="toc-h3"><a href="#section-42">原理</a></li><li class="toc-h3"><a href="#section-43">本项目代码示例</a></li><li class="toc-h3"><a href="#section-44">这一课先记住</a></li><li class="toc-h2"><a href="#section-45">第九课：Vite 是什么</a></li><li class="toc-h3"><a href="#section-46">知识点</a></li><li class="toc-h3"><a href="#section-47">原理</a></li><li class="toc-h3"><a href="#section-48">本项目代码示例</a></li><li class="toc-h3"><a href="#section-49">这一课先记住</a></li><li class="toc-h2"><a href="#section-50">第十课：后端不是 Flask 或 FastAPI，而是 Python 标准库服务</a></li><li class="toc-h3"><a href="#section-51">知识点</a></li><li class="toc-h3"><a href="#section-52">原理</a></li><li class="toc-h3"><a href="#section-53">本项目代码示例</a></li><li class="toc-h3"><a href="#section-54">这一课先记住</a></li><li class="toc-h2"><a href="#section-55">第十一课：后端接口层到底负责什么</a></li><li class="toc-h3"><a href="#section-56">知识点</a></li><li class="toc-h3"><a href="#section-57">原理</a></li><li class="toc-h3"><a href="#section-58">本项目代码示例</a></li><li class="toc-h3"><a href="#section-59">这一课先记住</a></li><li class="toc-h2"><a href="#section-60">第十二课：配置为什么单独放出来</a></li><li class="toc-h3"><a href="#section-61">知识点</a></li><li class="toc-h3"><a href="#section-62">原理</a></li><li class="toc-h3"><a href="#section-63">本项目代码示例</a></li><li class="toc-h3"><a href="#section-64">这一课先记住</a></li><li class="toc-h2"><a href="#section-65">第十三课：抽取主流程才是你最该懂的 Python 文件</a></li><li class="toc-h3"><a href="#section-66">知识点</a></li><li class="toc-h3"><a href="#section-67">原理</a></li><li class="toc-h3"><a href="#section-68">本项目代码示例</a></li><li class="toc-h3"><a href="#section-69">这一课先记住</a></li><li class="toc-h2"><a href="#section-70">第十四课：OCR 在这个项目里是什么位置</a></li><li class="toc-h3"><a href="#section-71">知识点</a></li><li class="toc-h3"><a href="#section-72">原理</a></li><li class="toc-h3"><a href="#section-73">本项目代码示例</a></li><li class="toc-h3"><a href="#section-74">这一课先记住</a></li><li class="toc-h2"><a href="#section-75">第十五课：企业报告抽取为什么不用大模型</a></li><li class="toc-h3"><a href="#section-76">知识点</a></li><li class="toc-h3"><a href="#section-77">原理</a></li><li class="toc-h3"><a href="#section-78">本项目代码示例</a></li><li class="toc-h3"><a href="#section-79">这一课先记住</a></li><li class="toc-h2"><a href="#section-80">第十六课：律师函抽取为什么用了大模型</a></li><li class="toc-h3"><a href="#section-81">知识点</a></li><li class="toc-h3"><a href="#section-82">原理</a></li><li class="toc-h3"><a href="#section-83">本项目代码示例</a></li><li class="toc-h3"><a href="#section-84">这一课先记住</a></li><li class="toc-h2"><a href="#section-85">第十七课：logical 是什么</a></li><li class="toc-h3"><a href="#section-86">知识点</a></li><li class="toc-h3"><a href="#section-87">原理</a></li><li class="toc-h3"><a href="#section-88">本项目代码示例</a></li><li class="toc-h3"><a href="#section-89">这一课先记住</a></li><li class="toc-h2"><a href="#section-90">第十八课：replace_map 为什么是关键中间层</a></li><li class="toc-h3"><a href="#section-91">知识点</a></li><li class="toc-h3"><a href="#section-92">原理</a></li><li class="toc-h3"><a href="#section-93">本项目代码示例</a></li><li class="toc-h3"><a href="#section-94">这一课先记住</a></li><li class="toc-h2"><a href="#section-95">第十九课：Word 渲染到底在做什么</a></li><li class="toc-h3"><a href="#section-96">知识点</a></li><li class="toc-h3"><a href="#section-97">原理</a></li><li class="toc-h3"><a href="#section-98">本项目代码示例</a></li><li class="toc-h3"><a href="#section-99">这一课先记住</a></li><li class="toc-h2"><a href="#section-100">第二十课：为什么这个项目强依赖本地文件系统</a></li><li class="toc-h3"><a href="#section-101">知识点</a></li><li class="toc-h3"><a href="#section-102">原理</a></li><li class="toc-h3"><a href="#section-103">本项目代码示例</a></li><li class="toc-h3"><a href="#section-104">这一课先记住</a></li><li class="toc-h2"><a href="#section-105">第二十一课：怎么读一次真实的调用链</a></li><li class="toc-h3"><a href="#section-106">知识点</a></li><li class="toc-h3"><a href="#section-107">原理</a></li><li class="toc-h3"><a href="#section-108">本项目代码示例</a></li><li class="toc-h3"><a href="#section-109">这一课先记住</a></li><li class="toc-h2"><a href="#section-110">第二十二课：这个项目里最容易让人困惑的坑</a></li><li class="toc-h3"><a href="#section-111">知识点</a></li><li class="toc-h3"><a href="#section-112">原理</a></li><li class="toc-h3"><a href="#section-113">本项目代码示例</a></li><li class="toc-h3"><a href="#section-114">这一课先记住</a></li><li class="toc-h2"><a href="#section-115">第二十三课：一页纸复盘整个项目</a></li><li class="toc-h3"><a href="#section-116">知识点</a></li><li class="toc-h3"><a href="#section-117">原理</a></li><li class="toc-h3"><a href="#section-118">本项目代码示例</a></li><li class="toc-h3"><a href="#section-119">这一课先记住</a></li><li class="toc-h2"><a href="#section-120">第二十四课：建议你按什么顺序真正去读代码</a></li><li class="toc-h3"><a href="#section-121">知识点</a></li><li class="toc-h3"><a href="#section-122">原理</a></li><li class="toc-h3"><a href="#section-123">本项目代码示例</a></li><li class="toc-h3"><a href="#section-124">这一课先记住</a></li><li class="toc-h2"><a href="#section-125">结课作业</a></li><li class="toc-h3"><a href="#section-126">练习 1：追踪“执行抽取”</a></li><li class="toc-h3"><a href="#section-127">练习 2：画出数据流</a></li><li class="toc-h3"><a href="#section-128">练习 3：回答 5 个问题</a></li><li class="toc-h2"><a href="#section-129">你读完这份文件后的目标状态</a></li></ul></section><main><p>﻿# 项目代码理解课本</p><p>副标题：用 Python 视角理解这个项目的前端、后端和业务流水线</p><h2 id="section-1">这份文件是给谁的</h2><p>这份文件默认读者是：</p><ul><li>主要会 Python</li><li>对 React、TypeScript、Vite 没什么概念</li><li>想先看懂项目，再慢慢补前端知识</li></ul><p>这不是“前端大全”，而是围绕当前仓库写的一份项目理解课本。</p><h2 id="section-2">这份文件怎么用</h2><p>整份文件只做三件事：</p><ol><li>先把必须学的知识点压缩到最少</li><li>每个知识点只讲到能看懂本项目为止</li><li>每个知识点都绑定到本项目里的具体代码</li></ol><p>你读每一节时，只回答 4 个问题：</p><ol><li>这个知识点在项目里是干什么的</li><li>它的原理是什么</li><li>这个项目里对应哪段代码</li><li>如果删掉它，用户会失去什么能力</li></ol><h2 id="section-3">全书总图</h2><p>先不要把这个项目看成“前端项目”或者“AI 项目”。</p><p>先把它看成一条流水线：</p><p><code>用户在网页点按钮 -&gt; 前端发请求 -&gt; Python 后端处理 -&gt; 结果写到本地文件 -&gt; 网页显示结果</code></p><p>你后面所有学习，都围绕这条线展开。</p><hr /><h2 id="section-4">第一课：先把整个项目看成一条流水线</h2><h3 id="section-5">知识点</h3><p>项目分层。</p><h3 id="section-6">原理</h3><p>一个工程项目通常不是“一个文件做完所有事”，而是分层：</p><ul><li>界面层：让用户操作</li><li>通信层：把请求发给后端</li><li>接口层：后端接请求</li><li>服务层：组织业务流程</li><li>工具层：做具体技术动作</li><li>存储层：保存中间结果和最终输出</li></ul><h3 id="section-7">本项目代码示例</h3><p>项目总说明：<code>README.md</code></p><p>整体流水线：<code>backend/workflows/full_pipeline.py</code></p><p>最值得先看的函数：</p><pre><code class="language-python"># backend/workflows/full_pipeline.py
+extract_result = extract_case_data(...)
+replace_map = build_replace_map(...)
+render_result = render_word_from_replace_map(...)</code></pre><p>这 3 行已经暴露了项目主干：</p><ul><li>先抽取</li><li>再生成 replace_map</li><li>再渲染 Word</li></ul><h3 id="section-8">这一课先记住</h3><p>这个项目的核心不是前端，而是 Python 流水线；前端只是让这条流水线变成网页可操作。</p><hr /><h2 id="section-9">第二课：为什么这个项目需要前端</h2><h3 id="section-10">知识点</h3><p>浏览器不能直接运行 Python 业务代码。</p><h3 id="section-11">原理</h3><p>用户打开网页时，浏览器最擅长运行的是 JavaScript 生态，而不是你的 Python 脚本。</p><p>所以只要项目想做成网页，就必须有一层“浏览器能运行的界面代码”。</p><p>在这个项目里：</p><ul><li>Python 负责 OCR、抽取、Word 生成</li><li>前端负责上传文件、点按钮、显示结果</li></ul><h3 id="section-12">本项目代码示例</h3><p>前端依赖：<code>frontend/package.json</code></p><pre><code class="language-json">{
+  &quot;dependencies&quot;: {
+    &quot;react&quot;: &quot;^18.3.1&quot;,
+    &quot;antd&quot;: &quot;^5.27.1&quot;
+  }
+}</code></pre><p>前端入口：<code>frontend/src/main.tsx</code></p><pre><code class="language-ts">ReactDOM.createRoot(document.getElementById(&#x27;root&#x27;)!).render(
+  &lt;React.StrictMode&gt;
+    &lt;App /&gt;
+  &lt;/React.StrictMode&gt;,
+);</code></pre><h3 id="section-13">这一课先记住</h3><p>前端不是来替代 Python 的，而是来给 Python 做一个网页控制面板。</p><hr /><h2 id="section-14">第三课：TypeScript 是什么</h2><h3 id="section-15">知识点</h3><p>TypeScript 是前端代码语言。</p><h3 id="section-16">原理</h3><p>你可以先把 TypeScript 理解成：</p><ul><li>语法上接近 JavaScript</li><li>但会强制你把数据结构写清楚</li></ul><p>它的作用很像你在 Python 里给函数参数、返回值、对象结构加类型提示，只不过更严格。</p><h3 id="section-17">本项目代码示例</h3><p>类型定义：<code>frontend/src/types.ts</code></p><pre><code class="language-ts">export interface AppSettings {
+  apiUrl: string;
+  apiKey: string;
+  model: string;
+  targetKeyword: string;
+}</code></pre><p>接口返回结构：</p><pre><code class="language-ts">export interface ExtractResponse {
+  case_name: string;
+  markdowns: {
+    enterprise_report: string;
+    lawyer_letter: string;
+  };
+  Defandent: JsonObject;
+}</code></pre><h3 id="section-18">这一课先记住</h3><p>TypeScript 的核心作用不是“炫技”，而是把对象结构写清楚，减少前后端联调时传错字段的概率。</p><hr /><h2 id="section-19">第四课：React 是什么</h2><h3 id="section-20">知识点</h3><p>React 是组织网页界面的方式。</p><h3 id="section-21">原理</h3><p>React 最核心的思想只有一句：</p><p><code>页面 = 当前状态的结果</code></p><p>状态变了，页面就重新更新。</p><p>比如：</p><ul><li>你还没上传文件时，页面显示“未选择”</li><li>上传后，页面显示文件名</li><li>后端返回结果后，页面显示 OCR 文本和 JSON</li></ul><h3 id="section-22">本项目代码示例</h3><p>页面总控：<code>frontend/src/App.tsx</code></p><pre><code class="language-ts">const [selectedFiles, setSelectedFiles] = useState({
+  enterpriseReportPdf: null as File | null,
+  lawyerLetterPdf: null as File | null,
+  templateFile: null as File | null,
+});</code></pre><p>这段代码说明：</p><ul><li>页面里保存了“当前选中的文件”这个状态</li><li>只要这个状态变了，页面显示也会跟着变</li></ul><h3 id="section-23">这一课先记住</h3><p>React 你现在不用系统学，只要把它理解成“用状态驱动页面更新”的框架就够了。</p><hr /><h2 id="section-24">第五课：组件是什么</h2><h3 id="section-25">知识点</h3><p>组件就是页面上的一块功能模块。</p><h3 id="section-26">原理</h3><p>为了不让所有界面代码都堆在一个文件里，React 会把页面拆成多个组件。</p><p>每个组件通常只负责一小块界面。</p><h3 id="section-27">本项目代码示例</h3><p>在 <code>frontend/src/App.tsx</code> 里你会看到：</p><pre><code class="language-ts">&lt;FileInputPanel files={selectedFiles} onFileChange={handleFileChange} /&gt;
+&lt;SettingsPanel settings={settings} onChange={handleSettingChange} /&gt;
+&lt;OutputPanel logs={logs} output={output} /&gt;</code></pre><p>对应文件：</p><ul><li><code>frontend/src/components/FileInputPanel.tsx</code></li><li><code>frontend/src/components/SettingsPanel.tsx</code></li><li><code>frontend/src/components/OutputPanel.tsx</code></li></ul><h3 id="section-28">这一课先记住</h3><p>组件不是“新的技术概念”，你可以把它理解成“拆出来的页面子函数”。</p><hr /><h2 id="section-29">第六课：页面状态为什么重要</h2><h3 id="section-30">知识点</h3><p>状态是前端里最重要的东西。</p><h3 id="section-31">原理</h3><p>前端页面并不是一张静态图片，它会跟着用户操作不断变化。</p><p>这些变化都要靠状态保存：</p><ul><li>文件是否选中</li><li>是否正在抽取</li><li>后端是否已连接</li><li>返回的结果是什么</li></ul><h3 id="section-32">本项目代码示例</h3><p><code>frontend/src/App.tsx</code></p><pre><code class="language-ts">const [isBackendReady, setIsBackendReady] = useState(false);
+const [isExtracting, setIsExtracting] = useState(false);
+const [defandent, setDefandent] = useState&lt;JsonObject&gt;(mockDefandent as JsonObject);
+const [output, setOutput] = useState&lt;OutputSummary&gt;({ status: &#x27;idle&#x27; });</code></pre><h3 id="section-33">这一课先记住</h3><p>如果你不知道一个页面为什么会变，就先找这个页面把哪些东西放进了状态里。</p><hr /><h2 id="section-34">第七课：前端怎样请求后端</h2><h3 id="section-35">知识点</h3><p>前端通过 HTTP 请求调用 Python 后端。</p><h3 id="section-36">原理</h3><p>网页不能直接调用 Python 函数，所以前端只能通过网络请求的方式，把数据发给本地后端服务。</p><p>在这个项目里，请求格式是 JSON。</p><h3 id="section-37">本项目代码示例</h3><p>请求封装文件：<code>frontend/src/api.ts</code></p><pre><code class="language-ts">const response = await fetch(`${API_BASE_URL}/api/extract`, {
+  method: &#x27;POST&#x27;,
+  headers: { &#x27;Content-Type&#x27;: &#x27;application/json&#x27; },
+  body: JSON.stringify(payload),
+});</code></pre><p>这段代码的意思是：</p><ul><li>请求地址是 <code>/api/extract</code></li><li>请求方法是 <code>POST</code></li><li>请求体是 JSON</li></ul><h3 id="section-38">这一课先记住</h3><p>在这个项目里，前端和后端的连接点不是“直接 import Python”，而是 <code>/api/...</code> 接口。</p><hr /><h2 id="section-39">第八课：为什么前端要把文件转成 base64</h2><h3 id="section-40">知识点</h3><p>浏览器里的文件对象不能直接原样塞进 JSON。</p><h3 id="section-41">原理</h3><p>用户在网页里选中的文件，前端拿到的是浏览器里的 <code>File</code> 对象。</p><p>为了通过 JSON 发给后端，需要先把文件内容转成字符串。这个项目选择了 base64。</p><h3 id="section-42">本项目代码示例</h3><p><code>frontend/src/api.ts</code></p><pre><code class="language-ts">async function serializeFile(file: File): Promise&lt;UploadPayload&gt; {
+  return {
+    name: file.name,
+    contentBase64: await fileToBase64(file),
+  };
+}</code></pre><h3 id="section-43">这一课先记住</h3><p>base64 不是业务逻辑，它只是“把文件内容装进 JSON 里传输”的技术手段。</p><hr /><h2 id="section-44">第九课：Vite 是什么</h2><h3 id="section-45">知识点</h3><p>Vite 是前端开发服务器和构建工具。</p><h3 id="section-46">原理</h3><p>你写的 <code>ts/tsx</code> 代码浏览器不能直接原样理解，所以需要一个工具把它跑起来、编译起来。</p><p>Vite 在开发时还会做一件很重要的事：接口代理。</p><h3 id="section-47">本项目代码示例</h3><p><code>frontend/vite.config.ts</code></p><pre><code class="language-ts">proxy: {
+  &#x27;/api&#x27;: {
+    target: &#x27;http://127.0.0.1:8000&#x27;,
+    changeOrigin: true,
+  },
+},</code></pre><p>这段代码表示：</p><ul><li>前端页面运行在 <code>5173</code></li><li>当前端请求 <code>/api/...</code> 时，Vite 会转发给 <code>8000</code> 的 Python 后端</li></ul><h3 id="section-48">这一课先记住</h3><p>Vite 在这个项目里最重要的价值，是让前端和本地 Python 后端顺滑联调。</p><hr /><h2 id="section-49">第十课：后端不是 Flask 或 FastAPI，而是 Python 标准库服务</h2><h3 id="section-50">知识点</h3><p>这个项目的后端用的是 <code>http.server</code>。</p><h3 id="section-51">原理</h3><p>后端服务的本质是：</p><ul><li>接收请求</li><li>看请求路径</li><li>调用对应 Python 函数</li><li>返回 JSON 或文件</li></ul><p>很多项目用 Flask/FastAPI 做这件事，但这个项目直接用了标准库。</p><h3 id="section-52">本项目代码示例</h3><p><code>backend/app/main.py</code></p><pre><code class="language-python">class CasePipelineRequestHandler(BaseHTTPRequestHandler):
+    def do_POST(self) -&gt; None:
+        if parsed.path == &#x27;/api/extract&#x27;:
+            _send_json(self, _handle_extract_request(payload))</code></pre><h3 id="section-53">这一课先记住</h3><p>不要被框架名词困住。无论是 FastAPI 还是标准库，接口层本质都是“路径分发到函数”。</p><hr /><h2 id="section-54">第十一课：后端接口层到底负责什么</h2><h3 id="section-55">知识点</h3><p>接口层负责“接”和“转”，不负责真正业务处理。</p><h3 id="section-56">原理</h3><p>一个清晰的工程会把：</p><ul><li>接口处理</li><li>业务处理</li></ul><p>分开写。这样后端主入口不会变成大杂烩。</p><h3 id="section-57">本项目代码示例</h3><p><code>backend/app/main.py</code> 中：</p><pre><code class="language-python">if parsed.path == &#x27;/api/extract&#x27;:
+    _send_json(self, _handle_extract_request(payload))</code></pre><p>而真正业务继续下沉到：</p><ul><li><code>backend/app/services/extract_service.py</code></li><li><code>backend/app/services/render_service.py</code></li></ul><h3 id="section-58">这一课先记住</h3><p>如果你在后端入口里看到了很长的业务逻辑，那通常说明分层不好。这个项目基本把业务下沉到了 service 层。</p><hr /><h2 id="section-59">第十二课：配置为什么单独放出来</h2><h3 id="section-60">知识点</h3><p>配置和业务代码是两回事。</p><h3 id="section-61">原理</h3><p>同一套代码在不同环境、不同案件下可能需要不同参数，比如：</p><ul><li>API 地址</li><li>API Key</li><li>模型名</li><li>目标关键词</li><li>图片对齐方式</li></ul><p>这些不应该硬编码在流程里。</p><h3 id="section-62">本项目代码示例</h3><p>配置入口：<code>backend/app/config.py</code></p><pre><code class="language-python">def load_runtime_settings() -&gt; dict[str, object]:
+    settings = get_builtin_settings()
+    settings.update(_read_runtime_settings_file())
+    settings.update(_read_env_overrides())
+    return _normalize_runtime_settings(settings)</code></pre><h3 id="section-63">这一课先记住</h3><p>配置层负责“让同一份代码可以换参数运行”，而不是直接执行业务。</p><hr /><h2 id="section-64">第十三课：抽取主流程才是你最该懂的 Python 文件</h2><h3 id="section-65">知识点</h3><p><code>extract_service.py</code> 是“执行抽取”的总控。</p><h3 id="section-66">原理</h3><p>业务主流程常常不是自己做所有细节，而是：</p><ul><li>先准备输入</li><li>再依次调用几个工具</li><li>最后收集结果统一返回</li></ul><h3 id="section-67">本项目代码示例</h3><p><code>backend/app/services/extract_service.py</code></p><pre><code class="language-python">defandent_md_path = ocr_pdf_to_markdown(...)
+demand_letter_md_path = ocr_pdf_to_markdown(...)
+defandent = extract_enterprise_report(...)
+demand_letter = build_lawyer_letter_output(...)
+logical = build_logical(...)</code></pre><p>这几行已经完整说明主流程：</p><ul><li>先 OCR</li><li>再分别抽两个 JSON</li><li>最后生成 logical</li></ul><h3 id="section-68">这一课先记住</h3><p>如果你只能先吃透一个 Python 文件，就先吃透 <code>extract_service.py</code>。</p><hr /><h2 id="section-69">第十四课：OCR 在这个项目里是什么位置</h2><h3 id="section-70">知识点</h3><p>OCR 不是最终目标，而是中间步骤。</p><h3 id="section-71">原理</h3><p>PDF 本身不是很适合直接做文本规则处理，所以项目先把 PDF 转成 Markdown 文本，再对 Markdown 做抽取。</p><h3 id="section-72">本项目代码示例</h3><p><code>backend/tools/pdf_to_markdown.py</code></p><pre><code class="language-python">pipeline_options.do_ocr = True
+result = converter.convert(str(pdf_path))
+return result.document.export_to_markdown()</code></pre><h3 id="section-73">这一课先记住</h3><p>在这个项目里，OCR 的产物不是最终结果，而是给后续抽取使用的 Markdown。</p><hr /><h2 id="section-74">第十五课：企业报告抽取为什么不用大模型</h2><h3 id="section-75">知识点</h3><p>结构比较稳定的文本，优先用规则抽取。</p><h3 id="section-76">原理</h3><p>如果一份文档格式相对固定，比如企业报告里常见“名称：”“统一社会信用代码：”这种字段，那用规则抽取通常更稳定、更便宜。</p><h3 id="section-77">本项目代码示例</h3><p><code>backend/tools/extract_enterprise_report.py</code></p><pre><code class="language-python">STANDARD_FIELDS = [
+    &quot;统一社会信用代码&quot;,
+    &quot;名称&quot;,
+    &quot;经营者&quot;,
+    &quot;注册日期&quot;,
+]</code></pre><p>以及：</p><pre><code class="language-python">standardized_fields = map_raw_kv_to_standard_fields(raw_kv, DEFAULT_FIELD_MAPPING)
+return build_output(standardized_fields, source_name)</code></pre><h3 id="section-78">这一课先记住</h3><p>企业报告抽取更像“规则解析器”，不是“AI 对话器”。</p><hr /><h2 id="section-79">第十六课：律师函抽取为什么用了大模型</h2><h3 id="section-80">知识点</h3><p>半结构化、语义更强的文本，更适合大模型参与。</p><h3 id="section-81">原理</h3><p>律师函不像企业报告那样整齐，它更像自然语言段落。</p><p>所以项目采用了：</p><ol><li>先切段</li><li>再让模型分类哪些段落是侵权事实</li><li>再让模型提炼客观事实</li><li>再改写成适合文书的表述</li></ol><h3 id="section-82">本项目代码示例</h3><p><code>backend/tools/extract_lawyer_letter_infringement.py</code></p><pre><code class="language-python">classified = classify_paragraphs(paragraphs, api_url, api_key, model, debug_store)
+selected = [item for item in classified if item[&quot;category&quot;] == &quot;侵权事实&quot;]
+fact_components = extract_fact_components(selected, api_url, api_key, model, debug_store)
+rewritten = rewrite_infringement_facts(fact_components, input_path.name, api_url, api_key, model, debug_store)</code></pre><h3 id="section-83">这一课先记住</h3><p>这个项目不是“整个文档扔给模型就完事”，而是把大模型嵌在明确的步骤里使用。</p><hr /><h2 id="section-84">第十七课：logical 是什么</h2><h3 id="section-85">知识点</h3><p><code>logical</code> 是规则推导出来的中间字段。</p><h3 id="section-86">原理</h3><p>项目里有些字段不是从原文直接抄出来的，而是根据条件推导出来的，比如：</p><ul><li>案由</li><li>诉讼请求三</li><li>不正当竞争事实段</li></ul><h3 id="section-87">本项目代码示例</h3><p>规则配置：<code>backend/configs/logical_rules.json</code></p><pre><code class="language-json">&quot;案由&quot;: {
+  &quot;when&quot;: &quot;企业名称包含目标关键词&quot;,
+  &quot;true&quot;: {&quot;mode&quot;: &quot;literal&quot;, &quot;value&quot;: &quot;侵害商标权及不正当竞争纠纷&quot;},
+  &quot;false&quot;: {&quot;mode&quot;: &quot;literal&quot;, &quot;value&quot;: &quot;侵害商标权纠纷&quot;}
+}</code></pre><p>生成函数：<code>backend/tools/build_logical_json.py</code></p><pre><code class="language-python">conditions = {str(name): _evaluate_condition(dict(rule), sources, params) for name, rule in ...}</code></pre><h3 id="section-88">这一课先记住</h3><p><code>logical</code> 不是原始抽取结果，它是“基于抽取结果进一步推理出来的结果”。</p><hr /><h2 id="section-89">第十八课：replace_map 为什么是关键中间层</h2><h3 id="section-90">知识点</h3><p><code>replace_map</code> 是连接“抽取结果”和“Word 模板”的桥。</p><h3 id="section-91">原理</h3><p>Word 模板不认识 <code>Defandent</code>、<code>DemandLetter</code>、<code>logical</code> 这些对象，它只认识占位符。</p><p>所以必须先把结构化结果转换成：</p><p><code>占位符 -&gt; 最终文本</code></p><h3 id="section-92">本项目代码示例</h3><p>配置文件：<code>backend/configs/replace_map_config.json</code></p><pre><code class="language-json">&quot;[--需要替换的被告--]&quot;: {
+  &quot;mode&quot;: &quot;path&quot;,
+  &quot;source&quot;: &quot;Defandent&quot;,
+  &quot;path&quot;: [&quot;名称&quot;, 0, &quot;value&quot;]
+}</code></pre><p>后端生成：<code>backend/app/services/replace_map_service.py</code></p><pre><code class="language-python">replace_map[str(keyword)] = _build_mapping_value(dict(mapping), sources, on_missing=on_missing)</code></pre><h3 id="section-93">这一课先记住</h3><p>模板替换前，最关键的准备动作就是生成 <code>replace_map</code>。</p><hr /><h2 id="section-94">第十九课：Word 渲染到底在做什么</h2><h3 id="section-95">知识点</h3><p>Word 渲染本质上就是“打开模板，然后替换占位符”。</p><h3 id="section-96">原理</h3><p>后端先把 <code>replace_map</code> 组织成一个渲染任务，再交给底层工具把 docx 改写并另存为新文件。</p><h3 id="section-97">本项目代码示例</h3><p>服务层：<code>backend/app/services/render_service.py</code></p><pre><code class="language-python">job = build_word_job(...)
+processed = process_documents(job)</code></pre><p>底层工具：<code>backend/tools/word_replace.py</code></p><pre><code class="language-python">doc = Document(working_src_path)
+replace_in_document(doc, job.replacements, job.image_settings, paragraph_align)
+doc.save(dst_path)</code></pre><h3 id="section-98">这一课先记住</h3><p>“生成 Word”并不是模型生成整篇文书，而是基于模板做替换。</p><hr /><h2 id="section-99">第二十课：为什么这个项目强依赖本地文件系统</h2><h3 id="section-100">知识点</h3><p>这个项目的大量中间结果都落在磁盘里，不在数据库里。</p><h3 id="section-101">原理</h3><p>当项目要处理文件、OCR 文本、中间 JSON、最终 docx 时，最自然的存储方式往往是目录结构，而不是表结构。</p><h3 id="section-102">本项目代码示例</h3><p>建目录函数：<code>backend/app/services/extract_service.py</code></p><pre><code class="language-python">dirs = {
+    &#x27;input_dir&#x27;: case_dir / &#x27;input_files&#x27;,
+    &#x27;ocr_dir&#x27;: case_dir / &#x27;ocr_md&#x27;,
+    &#x27;replace_dir&#x27;: case_dir / &#x27;replace&#x27;,
+    &#x27;word_output_dir&#x27;: case_dir / &#x27;word_output&#x27;,
+}</code></pre><p>真实产物目录：<code>backend/storage/cases/&lt;案件名&gt;/...</code></p><h3 id="section-103">这一课先记住</h3><p>学这个项目时，不要只盯代码。你必须同时看代码和 <code>backend/storage</code> 里的实际产物。</p><hr /><h2 id="section-104">第二十一课：怎么读一次真实的调用链</h2><h3 id="section-105">知识点</h3><p>读工程代码时，不要从文件夹树开始，而要从“一个用户动作”开始。</p><h3 id="section-106">原理</h3><p>最容易学懂的方式不是“先学完 React，再学完后端”，而是先选一个动作，比如“执行抽取”，然后顺着调用链往下追。</p><h3 id="section-107">本项目代码示例</h3><p>建议追踪这条线：</p><ol><li><code>frontend/src/App.tsx</code> 的 <code>handleExtract</code></li><li><code>frontend/src/api.ts</code> 的 <code>extractCaseData</code></li><li><code>backend/app/main.py</code> 的 <code>_handle_extract_request</code></li><li><code>backend/app/services/extract_service.py</code> 的 <code>extract_case_data</code></li></ol><p>你可以把它口头复述成：</p><ul><li>页面点按钮</li><li>前端发请求</li><li>后端接请求</li><li>Python 主流程干活</li></ul><h3 id="section-108">这一课先记住</h3><p>以后你看任何项目，优先追“一个按钮背后的整条线”，而不是先啃概念百科。</p><hr /><h2 id="section-109">第二十二课：这个项目里最容易让人困惑的坑</h2><h3 id="section-110">知识点</h3><p>前端 mock 数据和后端真实字段名不完全一致。</p><h3 id="section-111">原理</h3><p>为了演示页面，前端保留了一套 mock 数据；但真实后端输出字段已经发生过调整。</p><p>如果你只看前端演示数据，会误以为某些真实字段就是那样命名的。</p><h3 id="section-112">本项目代码示例</h3><p>前端演示数据：<code>frontend/src/mockData.ts</code></p><p>你会看到：</p><ul><li><code>企业名称</code></li><li><code>住所</code></li><li><code>成立日期</code></li><li><code>法定代表人</code></li></ul><p>后端真实企业报告抽取：<code>backend/tools/extract_enterprise_report.py</code></p><p>标准字段是：</p><ul><li><code>名称</code></li><li><code>经营场所</code></li><li><code>注册日期</code></li><li><code>经营者</code></li></ul><h3 id="section-113">这一课先记住</h3><p>学习这个项目时，优先相信：</p><ul><li>后端工具代码</li><li>后端真实输出文件</li></ul><p>而不是前端 mock 数据。</p><hr /><h2 id="section-114">第二十三课：一页纸复盘整个项目</h2><h3 id="section-115">知识点</h3><p>把项目压缩成最小心智模型。</p><h3 id="section-116">原理</h3><p>如果一个项目你能压缩成几句话复述出来，说明你已经真正入门了。</p><h3 id="section-117">本项目代码示例</h3><p>最小复述如下：</p><ol><li>前端 <code>App.tsx</code> 负责让用户上传文件、点按钮、看结果</li><li>前端 <code>api.ts</code> 负责把文件转成 base64 并请求后端接口</li><li>后端 <code>main.py</code> 负责接住 <code>/api/extract</code> 和 <code>/api/render</code></li><li><code>extract_service.py</code> 负责 OCR、企业报告抽取、律师函抽取、logical 生成</li><li><code>replace_map_service.py</code> 负责把抽取结果变成模板替换字典</li><li><code>render_service.py</code> 和 <code>word_replace.py</code> 负责把模板渲染成最终 docx</li><li>所有中间结果和最终结果都保存在 <code>backend/storage/cases/...</code></li></ol><h3 id="section-118">这一课先记住</h3><p>你现在不需要会写 React，也能读懂这个项目的大部分主线。</p><hr /><h2 id="section-119">第二十四课：建议你按什么顺序真正去读代码</h2><h3 id="section-120">知识点</h3><p>代码阅读要分批次，不能一口气吞。</p><h3 id="section-121">原理</h3><p>如果你从最复杂的工具文件开始，很容易被淹没。最好的顺序是从“总控”读到“细节”。</p><h3 id="section-122">本项目代码示例</h3><p>推荐顺序：</p><ol><li><code>README.md</code></li><li><code>backend/workflows/full_pipeline.py</code></li><li><code>frontend/src/App.tsx</code></li><li><code>frontend/src/api.ts</code></li><li><code>backend/app/main.py</code></li><li><code>backend/app/services/extract_service.py</code></li><li><code>backend/app/services/replace_map_service.py</code></li><li><code>backend/app/services/render_service.py</code></li><li><code>backend/tools/pdf_to_markdown.py</code></li><li><code>backend/tools/extract_enterprise_report.py</code></li><li><code>backend/tools/extract_lawyer_letter_infringement.py</code></li><li><code>backend/tools/build_logical_json.py</code></li><li><code>backend/tools/word_replace.py</code></li></ol><h3 id="section-123">这一课先记住</h3><p>先读总线，再读支线；先读调用者，再读被调用者。</p><hr /><h2 id="section-124">结课作业</h2><p>请你自己完成下面 3 个练习。</p><h3 id="section-125">练习 1：追踪“执行抽取”</h3><p>用自己的话写出下面 4 个文件的接力关系：</p><ul><li><code>frontend/src/App.tsx</code></li><li><code>frontend/src/api.ts</code></li><li><code>backend/app/main.py</code></li><li><code>backend/app/services/extract_service.py</code></li></ul><h3 id="section-126">练习 2：画出数据流</h3><p>把这几个对象按顺序画出来：</p><ul><li>企业报告 PDF</li><li>律师函 PDF</li><li>OCR Markdown</li><li><code>Defandent</code></li><li><code>DemandLetter</code></li><li><code>logical</code></li><li><code>replace_map</code></li><li>最终 docx</li></ul><h3 id="section-127">练习 3：回答 5 个问题</h3><ol><li>为什么这个项目需要前端</li><li>为什么前端要把文件转成 base64</li><li>为什么 <code>extract_service.py</code> 是核心文件</li><li>为什么 <code>replace_map</code> 不能省略</li><li>为什么学习时要同时看 <code>backend/storage</code> 里的真实输出</li></ol><hr /><h2 id="section-128">你读完这份文件后的目标状态</h2><p>如果你已经能做到下面这些，就说明这份课本达标了：</p><ul><li>你不再把 React、TypeScript、Vite 当成神秘词汇</li><li>你知道它们在这个项目里分别干什么</li><li>你能从一个按钮一路追到 Python 主流程</li><li>你知道最终的 Word 文书是怎么一步步生成的</li></ul><p>如果后面你愿意，我下一步可以继续把这份文件扩成“第二版课本”，在每一课后面再加：</p><ul><li>对应代码片段的逐行讲解</li><li>课后练习答案</li><li>术语表</li><li>适合导出 PDF 的封面和目录页</li></ul></main>
+</body>
+</html>
