@@ -12,6 +12,7 @@ interface JsonEditorCardProps {
   description?: string;
 }
 
+// JSON editor card.
 export function JsonEditorCard({
   title,
   value,

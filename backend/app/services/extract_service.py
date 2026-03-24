@@ -24,6 +24,7 @@ from independent_case_pipeline.backend.tools.extract_lawyer_letter_infringement 
 from independent_case_pipeline.backend.tools.pdf_to_markdown import build_docling_converter, convert_with_docling, disable_hf_symlinks, ensure_non_empty
 
 
+# Prepare case dirs.
 def prepare_case_dirs(case_name: str, cases_root: str | Path = DEFAULT_CASES_ROOT) -> dict[str, Path]:
     case_dir = Path(cases_root).expanduser().resolve() / case_name
     dirs = {
@@ -40,6 +41,7 @@ def prepare_case_dirs(case_name: str, cases_root: str | Path = DEFAULT_CASES_ROO
     return dirs
 
 
+# Copy input file.
 def copy_input_file(src: str | Path, dst_dir: str | Path) -> Path:
     src_path = Path(src).expanduser().resolve()
     dst_dir_path = Path(dst_dir).expanduser().resolve()
@@ -49,6 +51,7 @@ def copy_input_file(src: str | Path, dst_dir: str | Path) -> Path:
     return dst
 
 
+# Trim PDF last page.
 def trim_pdf_last_page(src: str | Path, dst: str | Path) -> Path:
     src_path = Path(src).expanduser().resolve()
     dst_path = Path(dst).expanduser().resolve()
@@ -64,6 +67,7 @@ def trim_pdf_last_page(src: str | Path, dst: str | Path) -> Path:
     return dst_path
 
 
+# OCR PDF to markdown.
 def ocr_pdf_to_markdown(converter: Any, pdf_path: Path, output_path: Path) -> Path:
     markdown = convert_with_docling(converter, pdf_path)
     markdown = ensure_non_empty(markdown, pdf_path)
@@ -72,12 +76,14 @@ def ocr_pdf_to_markdown(converter: Any, pdf_path: Path, output_path: Path) -> Pa
     return output_path
 
 
+# Write JSON.
 def write_json(path: Path, data: Any) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
     return path
 
 
+# Run with retry.
 def run_with_retry(func, attempts: int = 3, delay_seconds: int = 20):
     last_error = None
     for attempt in range(1, attempts + 1):
@@ -93,6 +99,7 @@ def run_with_retry(func, attempts: int = 3, delay_seconds: int = 20):
     raise last_error
 
 
+# Extract case data.
 def extract_case_data(*, case_name: str, lawyer_letter_pdf: str | Path, enterprise_report_pdf: str | Path, cases_root: str | Path = DEFAULT_CASES_ROOT, trim_last_page_for_lawyer_letter: bool = True, write_intermediate_jsons: bool = False, debug: bool = False, api_url: str = DEFAULT_API_URL, api_key: str = DEFAULT_API_KEY, model: str = DEFAULT_API_MODEL, target_keyword: str = DEFAULT_TARGET_KEYWORD, logical_rules_config: str | Path = DEFAULT_LOGICAL_RULES_CONFIG) -> dict[str, Any]:
     dirs = prepare_case_dirs(case_name, cases_root)
     copied_lawyer_pdf = copy_input_file(lawyer_letter_pdf, dirs['input_dir'])

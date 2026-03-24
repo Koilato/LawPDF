@@ -43,6 +43,7 @@ const createUploadProps = (
   maxCount: 1,
 });
 
+// File input panel.
 export function FileInputPanel({ files, onFileChange }: FileInputPanelProps) {
   return (
     <Card title="文件上传" bordered={false}>

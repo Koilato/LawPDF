@@ -14,14 +14,17 @@ from independent_case_pipeline.backend.app.config import DEFAULT_REPLACE_MAP_CON
 ExtractedSources = dict[str, dict[str, Any]]
 
 
+# Read JSON.
 def read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding='utf-8-sig'))
 
 
+# Read replace map config.
 def read_replace_map_config(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding='utf-8-sig'))
 
 
+# Normalize replace map.
 def normalize_replace_map(raw_map: dict[Any, Any]) -> dict[str, str]:
     normalized: dict[str, str] = {}
     for key, value in raw_map.items():
@@ -34,6 +37,7 @@ def normalize_replace_map(raw_map: dict[Any, Any]) -> dict[str, str]:
     return normalized
 
 
+# Resolve path.
 def _resolve_path(data: Any, path_parts: list[Any]) -> Any:
     current = data
     for part in path_parts:
@@ -54,6 +58,7 @@ def _resolve_path(data: Any, path_parts: list[Any]) -> Any:
     return current
 
 
+# Stringify.
 def _stringify(value: Any) -> str:
     if value is None:
         return ''
@@ -62,6 +67,7 @@ def _stringify(value: Any) -> str:
     return str(value)
 
 
+# Resolve source value.
 def _resolve_source_value(source_name: str, path_parts: list[Any], sources: ExtractedSources, default: str = '') -> str:
     source = sources.get(source_name)
     if source is None:
@@ -73,12 +79,15 @@ def _resolve_source_value(source_name: str, path_parts: list[Any], sources: Extr
     return _stringify(value)
 
 
+# Render template.
 def _render_template(template: str, values: dict[str, str]) -> str:
+    # Replace var.
     def replace_var(match: re.Match[str]) -> str:
         return values.get(match.group(1), '')
     return re.sub(r'\{\{\s*([a-zA-Z0-9_]+)\s*\}\}', replace_var, template)
 
 
+# Build mapping value.
 def _build_mapping_value(mapping: dict[str, Any], sources: ExtractedSources, on_missing: str = 'empty') -> str:
     mode = str(mapping.get('mode') or 'path').strip().lower()
     default = _stringify(mapping.get('default', ''))
@@ -100,6 +109,7 @@ def _build_mapping_value(mapping: dict[str, Any], sources: ExtractedSources, on_
     raise ValueError(f'Unsupported mapping mode: {mode}')
 
 
+# Build replace map from config.
 def build_replace_map_from_config(*, defandent: dict[str, Any], demand_letter: dict[str, Any], config: dict[str, Any], logical: dict[str, Any] | None = None, overrides: dict[str, Any] | None = None) -> dict[str, str]:
     sources: ExtractedSources = {
         'Defandent': defandent,
@@ -116,17 +126,20 @@ def build_replace_map_from_config(*, defandent: dict[str, Any], demand_letter: d
     return normalize_replace_map(replace_map)
 
 
+# Build replace map.
 def build_replace_map(*, defandent: dict[str, Any], demand_letter: dict[str, Any], logical: dict[str, Any] | None = None, config_path: Path | None = DEFAULT_REPLACE_MAP_CONFIG, overrides: dict[str, Any] | None = None, rules_path: Path | None = None) -> dict[str, str]:
     resolved_config_path = rules_path or config_path or DEFAULT_REPLACE_MAP_CONFIG
     return build_replace_map_from_config(defandent=defandent, demand_letter=demand_letter, logical=logical, config=read_replace_map_config(Path(resolved_config_path)), overrides=overrides)
 
 
+# Write replace map.
 def write_replace_map(path: Path, replace_map: dict[str, str]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(replace_map, ensure_ascii=False, indent=2), encoding='utf-8')
     return path
 
 
+# Parse args.
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Build replace_map.json from Defandent.json, DemandLetter.json, logical.json, and replace_map_config.json.')
     parser.add_argument('--defandent-json', required=True)
@@ -137,6 +150,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# Main.
 def main() -> int:
     args = parse_args()
     defandent_json_path = Path(args.defandent_json).expanduser().resolve()

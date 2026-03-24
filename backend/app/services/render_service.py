@@ -10,6 +10,7 @@ from typing import Any
 from independent_case_pipeline.backend.tools.word_replace import ImageSettings, Job, Replacement, process_documents
 
 
+# Sanitize output stem.
 def sanitize_output_stem(raw_name: str, fallback: str) -> str:
     text = (raw_name or '').strip()
     if not text:
@@ -19,6 +20,7 @@ def sanitize_output_stem(raw_name: str, fallback: str) -> str:
     return text or fallback
 
 
+# Build word job dict.
 def build_word_job_dict(
     *,
     replace_map: dict[str, str],
@@ -52,6 +54,7 @@ def build_word_job_dict(
     return job
 
 
+# Build word job.
 def build_word_job(
     *,
     replace_map: dict[str, str],
@@ -75,12 +78,14 @@ def build_word_job(
     )
 
 
+# Write word job.
 def write_word_job(path: Path, job_dict: dict[str, Any]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(job_dict, ensure_ascii=False, indent=2), encoding='utf-8')
     return path
 
 
+# Render word from replace map.
 def render_word_from_replace_map(
     *,
     replace_map: dict[str, str],

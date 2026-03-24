@@ -1,8 +1,8 @@
-import type { AppSettings, ReplaceMapConfig } from './types';
+﻿import type { AppSettings, ReplaceMapConfig } from './types';
 
 export const defaultSettings: AppSettings = {
-  apiUrl: 'http://104.168.109.197:8317/v1/chat/completions',
-  apiKey: 'sk-001',
+  apiUrl: '',
+  apiKey: '',
   model: 'gemini-3-flash-preview',
   targetKeyword: '光明',
   trimLastPageForLawyerLetter: true,
@@ -259,3 +259,4 @@ export const mockOcrMarkdown = {
 
 近日，据我委托人反馈，你方在天津市红桥区丁字沽风采里附近开设了一家销售眼镜的店铺。`,
 };
+

@@ -6,6 +6,7 @@ interface SettingsPanelProps {
   onChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
 }
 
+// Settings panel.
 export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
   return (
     <Card title="运行设置" bordered={false}>

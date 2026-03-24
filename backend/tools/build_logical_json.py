@@ -18,14 +18,17 @@ ExtractedSources = dict[str, dict[str, Any]]
 RuntimeParams = dict[str, str]
 
 
+# Read JSON.
 def read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding='utf-8-sig'))
 
 
+# Read rules config.
 def read_rules_config(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding='utf-8-sig'))
 
 
+# Resolve path.
 def _resolve_path(data: Any, path_parts: list[Any]) -> Any:
     current = data
     for part in path_parts:
@@ -46,6 +49,7 @@ def _resolve_path(data: Any, path_parts: list[Any]) -> Any:
     return current
 
 
+# Stringify.
 def _stringify(value: Any) -> str:
     if value is None:
         return ''
@@ -54,6 +58,7 @@ def _stringify(value: Any) -> str:
     return str(value)
 
 
+# Resolve source value.
 def _resolve_source_value(source_name: str, path_parts: list[Any], sources: ExtractedSources, default: str = '') -> str:
     source = sources.get(source_name)
     if source is None:
@@ -65,13 +70,16 @@ def _resolve_source_value(source_name: str, path_parts: list[Any], sources: Extr
     return _stringify(value)
 
 
+# Render template.
 def _render_template(template: str, values: dict[str, str]) -> str:
+    # Replace var.
     def replace_var(match: re.Match[str]) -> str:
         return values.get(match.group(1), '')
     # Match variable names inside {{ ... }} without relying on locale-sensitive character ranges.
     return re.sub(r'\{\{\s*([^{}\s]+)\s*\}\}', replace_var, template)
 
 
+# Resolve value rule.
 def _resolve_value_rule(rule: dict[str, Any], sources: ExtractedSources, params: RuntimeParams) -> str:
     mode = str(rule.get('mode') or 'literal').strip().lower()
     default = _stringify(rule.get('default', ''))
@@ -87,6 +95,7 @@ def _resolve_value_rule(rule: dict[str, Any], sources: ExtractedSources, params:
     return _stringify(rule.get('value', default))
 
 
+# Evaluate condition.
 def _evaluate_condition(condition: dict[str, Any], sources: ExtractedSources, params: RuntimeParams) -> bool:
     condition_type = str(condition.get('type') or 'contains').strip().lower()
     actual_value = _resolve_source_value(str(condition.get('source') or '').strip(), list(condition.get('path') or []), sources, default='')
@@ -101,6 +110,7 @@ def _evaluate_condition(condition: dict[str, Any], sources: ExtractedSources, pa
     return expected in actual_value
 
 
+# Build logical from config.
 def build_logical_from_config(*, defandent: dict[str, Any], demand_letter: dict[str, Any], config: dict[str, Any], target_keyword: str = DEFAULT_TARGET_KEYWORD) -> dict[str, list[dict[str, str]]]:
     sources: ExtractedSources = {'Defandent': defandent, 'DemandLetter': demand_letter}
     params: RuntimeParams = {'target_keyword': target_keyword}
@@ -116,17 +126,20 @@ def build_logical_from_config(*, defandent: dict[str, Any], demand_letter: dict[
     return logical
 
 
+# Build logical.
 def build_logical(*, defandent: dict[str, Any], demand_letter: dict[str, Any], config_path: Path | None = DEFAULT_LOGICAL_RULES_CONFIG, target_keyword: str = DEFAULT_TARGET_KEYWORD) -> dict[str, list[dict[str, str]]]:
     resolved_config_path = Path(config_path or DEFAULT_LOGICAL_RULES_CONFIG).expanduser().resolve()
     return build_logical_from_config(defandent=defandent, demand_letter=demand_letter, config=read_rules_config(resolved_config_path), target_keyword=target_keyword)
 
 
+# Write JSON.
 def write_json(path: Path, data: dict[str, Any]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
     return path
 
 
+# Parse args.
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Build logical.json from Defandent.json, DemandLetter.json, and logical rules.')
     parser.add_argument('--defandent-json', required=True)
@@ -137,6 +150,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# Main.
 def main() -> int:
     args = parse_args()
     defandent_json_path = Path(args.defandent_json).expanduser().resolve()

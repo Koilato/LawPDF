@@ -8,6 +8,7 @@ from typing import Any
 from independent_case_pipeline.backend.app.services.render_service import render_word_from_replace_map
 
 
+# Handle render.
 def handle_render(request: Any) -> dict[str, Any]:
     payload = asdict(request) if is_dataclass(request) else dict(request)
     return render_word_from_replace_map(**payload)

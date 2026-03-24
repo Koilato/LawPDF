@@ -7,7 +7,7 @@
     "[--需要替换的被告--]": {
       "mode": "path",
       "source": "Defandent",
-      "path": ["企业名称", 0, "value"],
+      "path": ["名称", 0, "value"],
       "default": "",
       "required": true,
       "editable": true,
@@ -16,7 +16,7 @@
     "[--需要替换的被告2--]": {
       "mode": "path",
       "source": "Defandent",
-      "path": ["企业名称", 0, "value"],
+      "path": ["名称", 0, "value"],
       "default": "",
       "required": false,
       "editable": true,
@@ -34,7 +34,7 @@
     "[--需要替换的住所--]": {
       "mode": "path",
       "source": "Defandent",
-      "path": ["住所", 0, "value"],
+      "path": ["经营场所", 0, "value"],
       "default": "",
       "required": true,
       "editable": true,
@@ -43,7 +43,7 @@
     "[--需要替换的住所2--]": {
       "mode": "path",
       "source": "Defandent",
-      "path": ["住所", 0, "value"],
+      "path": ["经营场所", 0, "value"],
       "default": "",
       "required": false,
       "editable": true,
@@ -52,7 +52,7 @@
     "[--需要替换的成立日期--]": {
       "mode": "path",
       "source": "Defandent",
-      "path": ["成立日期", 0, "value"],
+      "path": ["注册日期", 0, "value"],
       "default": "",
       "required": true,
       "editable": true,
@@ -61,7 +61,7 @@
     "[--需要替换的成立日期2--]": {
       "mode": "path",
       "source": "Defandent",
-      "path": ["成立日期", 0, "value"],
+      "path": ["注册日期", 0, "value"],
       "default": "",
       "required": false,
       "editable": true,
@@ -79,7 +79,7 @@
     "[--需要替换的法定代表人--]": {
       "mode": "path",
       "source": "Defandent",
-      "path": ["法定代表人", 0, "value"],
+      "path": ["经营者", 0, "value"],
       "default": "",
       "required": true,
       "editable": true,
@@ -136,40 +136,6 @@
       "required": false,
       "editable": true,
       "description": "默认诉请金额（万元）"
-    },
-    "[--需要替换的侵权公司信息--]": {
-      "mode": "template",
-      "template": "被告{{name}}，成立于{{date}}，住所地为{{address}}，经营范围包括{{scope}}。",
-      "vars": {
-        "name": {
-          "mode": "path",
-          "source": "Defandent",
-          "path": ["企业名称", 0, "value"],
-          "default": ""
-        },
-        "date": {
-          "mode": "path",
-          "source": "Defandent",
-          "path": ["成立日期", 0, "value"],
-          "default": ""
-        },
-        "address": {
-          "mode": "path",
-          "source": "Defandent",
-          "path": ["住所", 0, "value"],
-          "default": ""
-        },
-        "scope": {
-          "mode": "path",
-          "source": "Defandent",
-          "path": ["经营范围", 0, "value"],
-          "default": ""
-        }
-      },
-      "default": "",
-      "required": false,
-      "editable": true,
-      "description": "由多个企业字段拼接成侵权公司信息"
     },
     "[--需要替换的案由--]": {
       "mode": "path",

@@ -1,5 +1,6 @@
 import type { ReplaceMapConfig, ReplaceMapConfigRule } from '../types';
 
+// Convert to text.
 function toText(value: unknown): string {
   if (value === null || value === undefined) {
     return '';
@@ -7,6 +8,7 @@ function toText(value: unknown): string {
   return String(value);
 }
 
+// Resolve path.
 function resolvePath(data: unknown, pathParts: Array<string | number>): unknown {
   let current: unknown = data;
 
@@ -38,10 +40,12 @@ function resolvePath(data: unknown, pathParts: Array<string | number>): unknown 
   return current;
 }
 
+// Render template.
 function renderTemplate(template: string, values: Record<string, string>): string {
   return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key: string) => values[key] ?? '');
 }
 
+// Resolve rule value.
 function resolveRuleValue(
   rule: ReplaceMapConfigRule,
   sources: Record<string, unknown>,
@@ -63,6 +67,7 @@ function resolveRuleValue(
   return rendered || toText(rule.default ?? '');
 }
 
+// Build replace map.
 export function buildReplaceMap(
   config: ReplaceMapConfig,
   sources: {
@@ -76,10 +81,12 @@ export function buildReplaceMap(
   );
 }
 
+// Safely parse config.
 export function safeParseConfig(text: string): ReplaceMapConfig {
   return JSON.parse(text) as ReplaceMapConfig;
 }
 
+// Convert to pretty JSON.
 export function toPrettyJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }

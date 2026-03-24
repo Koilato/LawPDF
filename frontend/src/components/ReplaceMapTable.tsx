@@ -4,6 +4,7 @@ interface ReplaceMapTableProps {
   replaceMap: Record<string, string>;
 }
 
+// Replace map table.
 export function ReplaceMapTable({ replaceMap }: ReplaceMapTableProps) {
   const dataSource = Object.entries(replaceMap).map(([keyword, text], index) => ({ key: `${index}-${keyword}`, keyword, text }));
 

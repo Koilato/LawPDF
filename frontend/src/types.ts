@@ -1,4 +1,4 @@
-export type JsonPrimitive = string | number | boolean | null;
+﻿export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonObject | JsonValue[];
 export interface JsonObject {
   [key: string]: JsonValue;
@@ -101,6 +101,12 @@ export interface BackendSettingsResponse {
   replace_map_config_text: string;
 }
 
+export interface SettingsSaveResponse {
+  status: 'ok' | 'error';
+  settings: BackendSettingsResponse['settings'];
+  message?: string;
+}
+
 export interface ExtractResponse {
   status: 'ok' | 'error';
   case_name: string;
@@ -129,4 +135,5 @@ export interface RenderResponse {
   processed?: number;
   message?: string;
 }
+
 

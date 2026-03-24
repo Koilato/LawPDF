@@ -26,6 +26,7 @@ DEFAULT_DEMANDLETTER_JSON = DEFAULT_SAMPLE_ROOT / '律师函.json'
 DEFAULT_OUTPUT_ROOT = PROJECT_ROOT / 'backend' / 'storage' / 'temp' / 'self_check'
 
 
+# Create DOCX template.
 def create_docx_template(path: Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     doc = Document()
@@ -39,6 +40,7 @@ def create_docx_template(path: Path) -> Path:
     return path
 
 
+# Convert DOCX to DOC.
 def convert_docx_to_doc(src_docx: Path, dst_doc: Path) -> tuple[bool, str | None]:
     dst_doc.parent.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
@@ -77,11 +79,13 @@ def convert_docx_to_doc(src_docx: Path, dst_doc: Path) -> tuple[bool, str | None
     return False, ' | '.join(errors) if errors else 'unknown error'
 
 
+# Read DOCX text.
 def read_docx_text(path: Path) -> list[str]:
     doc = Document(str(path))
     return [paragraph.text for paragraph in doc.paragraphs]
 
 
+# Run self check.
 def run_self_check(
     *,
     defandent_json: Path,
@@ -153,6 +157,7 @@ def run_self_check(
     return report
 
 
+# Parse args.
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Create a temporary Word template and run a replacement self-check.')
     parser.add_argument('--defandent-json', default=str(DEFAULT_DEFANDENT_JSON), help='Path to Defandent.json')
@@ -162,6 +167,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# Main.
 def main() -> int:
     args = parse_args()
     report = run_self_check(

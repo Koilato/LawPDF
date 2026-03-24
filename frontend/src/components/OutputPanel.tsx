@@ -14,6 +14,7 @@ const statusMap = {
   error: { color: 'error', icon: <WarningOutlined />, text: '执行失败' },
 } as const;
 
+// Output panel.
 export function OutputPanel({ logs, output }: OutputPanelProps) {
   const status = statusMap[output.status];
   const hasDocx = Boolean(output.docxPath);

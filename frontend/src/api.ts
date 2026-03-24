@@ -1,4 +1,11 @@
-import type { AppSettings, BackendSettingsResponse, ExtractResponse, RenderResponse, UploadSelection } from './types';
+﻿import type {
+  AppSettings,
+  BackendSettingsResponse,
+  ExtractResponse,
+  RenderResponse,
+  SettingsSaveResponse,
+  UploadSelection,
+} from './types';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '';
 
@@ -10,7 +17,6 @@ interface UploadPayload {
 interface ExtractRequestPayload {
   case_name?: string;
   files: Partial<Record<'enterpriseReportPdf' | 'lawyerLetterPdf' | 'templateFile', UploadPayload>>;
-  settings: Partial<AppSettings>;
   replace_map_config_text?: string;
 }
 
@@ -19,15 +25,15 @@ interface RenderRequestPayload {
   template_file_path?: string;
   template_file?: UploadPayload;
   replace_map: Record<string, string>;
-  settings: Partial<AppSettings>;
 }
 
+// Normalize settings.
 function normalizeSettings(payload: BackendSettingsResponse['settings']): AppSettings {
   return {
     apiUrl: payload.api_url,
     apiKey: payload.api_key,
     model: payload.model,
-    targetKeyword: payload.target_keyword ?? '光明',
+    targetKeyword: payload.target_keyword ?? '鍏夋槑',
     trimLastPageForLawyerLetter: payload.trim_last_page_for_lawyer_letter,
     writeIntermediateJsons: payload.write_intermediate_jsons,
     debug: payload.debug,
@@ -46,6 +52,7 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
   return data;
 }
 
+// File to base64.
 async function fileToBase64(file: File): Promise<string> {
   return await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -59,6 +66,7 @@ async function fileToBase64(file: File): Promise<string> {
   });
 }
 
+// Serialize file.
 async function serializeFile(file: File): Promise<UploadPayload> {
   return {
     name: file.name,
@@ -66,6 +74,7 @@ async function serializeFile(file: File): Promise<UploadPayload> {
   };
 }
 
+// Fetch backend settings.
 export async function fetchBackendSettings(): Promise<{
   settings: AppSettings;
   replaceMapConfigText: string;
@@ -80,13 +89,37 @@ export async function fetchBackendSettings(): Promise<{
   };
 }
 
+// Save backend settings.
+export async function saveBackendSettings(settings: AppSettings): Promise<AppSettings> {
+  const response = await fetch(`${API_BASE_URL}/api/settings/save`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      settings: {
+        api_url: settings.apiUrl,
+        api_key: settings.apiKey,
+        model: settings.model,
+        target_keyword: settings.targetKeyword,
+        trim_last_page_for_lawyer_letter: settings.trimLastPageForLawyerLetter,
+        write_intermediate_jsons: settings.writeIntermediateJsons,
+        debug: settings.debug,
+        image_align: settings.imageAlign,
+        image_width_cm: settings.imageWidthCm ?? null,
+        image_height_cm: settings.imageHeightCm ?? null,
+      },
+    }),
+  });
+  const data = await parseJsonResponse<SettingsSaveResponse>(response);
+  return normalizeSettings(data.settings);
+}
+
+// Extract case data.
 export async function extractCaseData(options: {
   files: UploadSelection;
-  settings: AppSettings;
   replaceMapConfigText: string;
   caseName?: string;
 }): Promise<ExtractResponse> {
-  const { files, settings, replaceMapConfigText, caseName } = options;
+  const { files, replaceMapConfigText, caseName } = options;
   if (!files.enterpriseReportPdf || !files.lawyerLetterPdf) {
     throw new Error('请先选择企业报告 PDF 和律师函 PDF');
   }
@@ -97,7 +130,6 @@ export async function extractCaseData(options: {
       enterpriseReportPdf: await serializeFile(files.enterpriseReportPdf),
       lawyerLetterPdf: await serializeFile(files.lawyerLetterPdf),
     },
-    settings,
     replace_map_config_text: replaceMapConfigText,
   };
 
@@ -113,10 +145,10 @@ export async function extractCaseData(options: {
   return await parseJsonResponse<ExtractResponse>(response);
 }
 
+// Render word document.
 export async function renderWordDocument(options: {
   caseName: string;
   replaceMap: Record<string, string>;
-  settings: AppSettings;
   templateFilePath?: string;
   templateFile?: File | null;
 }): Promise<RenderResponse> {
@@ -124,7 +156,6 @@ export async function renderWordDocument(options: {
     case_name: options.caseName,
     template_file_path: options.templateFilePath,
     replace_map: options.replaceMap,
-    settings: options.settings,
   };
 
   if (options.templateFile) {
@@ -140,3 +171,4 @@ export async function renderWordDocument(options: {
 }
 
 export { API_BASE_URL };
+

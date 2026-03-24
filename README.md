@@ -10,7 +10,7 @@
 6. 使用 `replace_map_config.json` 生成最终 `replace_map`
 7. 按 `replace_map` 替换 Word 模板中的占位符并输出文档
 
-## 当前目录
+## 目录说明
 
 - `frontend/`
   - 本地网页工作台
@@ -25,6 +25,8 @@
   - JSON 配置，例如 `replace_map_config.json`
 - `backend/storage/`
   - 上传文件、案例目录、临时目录、输出目录
+- `scripts/`
+  - 本地启动脚本
 
 ## 核心数据对象
 
@@ -50,52 +52,104 @@
 - `template`
   - 用简单变量拼接字符串
 
-## Python 依赖安装
+## 项目启动说明
 
-推荐直接使用：
+推荐在两个 PowerShell 窗口中分别启动后端和前端。
+
+### 1. 准备后端环境
+
+如果还没有创建 Conda 环境，在项目根目录执行：
 
 ```powershell
-cd .\independent_case_pipeline
+.\setup_env.ps1
+```
+
+这个脚本会基于 `environment.yml` 创建本地环境：
+
+```text
+.\.conda\case-pipeline
+```
+
+如果你想手动安装，也可以执行：
+
+```powershell
+conda env create -p .\.conda\case-pipeline -f .\environment.yml --force
+```
+
+或者只安装后端 Python 依赖：
+
+```powershell
 pip install -r .\requirements.txt
 ```
 
-如果你使用 conda，也可以：
+### 2. 启动后端
+
+推荐直接执行项目自带脚本：
 
 ```powershell
-conda env create -f .\environment.yml
-conda activate case-ocr-extract
+.\scripts\start_backend.ps1
 ```
 
-## 启动后端
+如果想手动启动，在项目根目录执行：
 
 ```powershell
-cd .\independent_case_pipeline
-& 'C:\Users\xhi\Documents\New project\.conda\case-pipeline\python.exe' .\backend\app\main.py
+& '.\.conda\case-pipeline\python.exe' '.\backend\app\main.py' --host 127.0.0.1 --port 8000
 ```
 
-默认地址：
+后端默认地址：
 
 - `http://127.0.0.1:8000`
+
+健康检查：
+
+```powershell
+Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8000/api/health
+```
 
 当前接口：
 
 - `GET /api/health`
 - `GET /api/settings`
+- `POST /api/settings/save`
 - `POST /api/extract`
 - `POST /api/render`
 - `GET /api/files?path=...`
 
-## 启动前端
+### 3. 启动前端
+
+首次运行先安装前端依赖：
 
 ```powershell
-cd .\independent_case_pipeline\frontend
+Set-Location .\frontend
 npm install
-npm run dev
 ```
 
-默认地址：
+推荐直接执行项目自带脚本：
+
+```powershell
+.\scripts\start_frontend.ps1
+```
+
+如果想手动启动，在 `frontend` 目录执行：
+
+```powershell
+Set-Location .\frontend
+npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
+```
+
+前端默认地址：
 
 - `http://127.0.0.1:5173`
+
+### 4. 打开系统
+
+当前端和后端都启动完成后，打开：
+
+```text
+http://127.0.0.1:5173
+```
+
+前端默认会请求本地后端 `http://127.0.0.1:8000`。
 
 ## 前端可设置项
 
@@ -126,9 +180,14 @@ npm run dev
   - `backend/app/services/replace_map_service.py`
 - Word 渲染服务：
   - `backend/app/services/render_service.py`
+- 后端启动脚本：
+  - `scripts/start_backend.ps1`
+- 前端启动脚本：
+  - `scripts/start_frontend.ps1`
 
 ## 注意事项
 
+- `scripts/start_backend.ps1` 和 `scripts/start_frontend.ps1` 会把输出重定向到 `logs/` 目录。
 - Word 输出文档如果正在被 WPS 或 Word 打开，重新生成时可能会因为文件占用而失败。
-- 这个项目现在以网页端流程为主，历史兼容入口文件已尽量弱化。
 - `requirements.txt` 只描述 Python 后端依赖；前端依赖由 `frontend/package.json` 管理。
+- 这个项目现在以网页端流程为主，历史兼容入口文件已尽量弱化。

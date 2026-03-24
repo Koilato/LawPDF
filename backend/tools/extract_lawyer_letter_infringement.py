@@ -9,19 +9,22 @@ import re
 import sys
 from pathlib import Path
 from typing import Any
-from urllib import error, request
+import openai
+from openai import OpenAI
 
 
-DEFAULT_API_URL = "http://104.168.109.197:8317/v1/chat/completions"
+DEFAULT_API_URL = "http://104.168.109.197:8317/v1"
 DEFAULT_API_KEY = "sk-001"
 DEFAULT_API_MODEL = "gpt-5.1"
 VALID_CATEGORIES = {"引言", "权利基础", "侵权事实", "法律评价", "整改要求", "结尾", "其他"}
 
 
+# Read markdown.
 def read_markdown(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+# Clean text.
 def clean_text(text: str) -> str:
     value = text.strip().replace("&gt;", ">")
     value = re.sub(r"\s+", " ", value)
@@ -31,10 +34,12 @@ def clean_text(text: str) -> str:
     return value
 
 
+# Split paragraphs.
 def split_paragraphs(markdown: str) -> list[dict[str, Any]]:
     paragraphs: list[dict[str, Any]] = []
     buffer: list[str] = []
 
+    # Flush.
     def flush() -> None:
         if not buffer:
             return
@@ -63,6 +68,7 @@ def split_paragraphs(markdown: str) -> list[dict[str, Any]]:
     return paragraphs
 
 
+# Strip code fences.
 def strip_code_fences(text: str) -> str:
     match = re.search(r"```(?:json)?\s*(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
     if match:
@@ -70,6 +76,7 @@ def strip_code_fences(text: str) -> str:
     return text.strip()
 
 
+# Extract JSON text.
 def extract_json_text(text: str) -> str:
     stripped = strip_code_fences(text)
     if stripped.startswith("{") or stripped.startswith("["):
@@ -88,11 +95,64 @@ def extract_json_text(text: str) -> str:
     raise ValueError("模型返回中未找到 JSON。")
 
 
+# Parse JSON response.
 def parse_json_response(text: str) -> Any:
     return json.loads(extract_json_text(text))
 
 
-def chat_completion(
+# Build a Responses API payload from chat-style messages.
+def build_responses_payload(messages: list[dict[str, str]]) -> tuple[str | None, str | list[dict[str, str]]]:
+    instructions_parts: list[str] = []
+    response_input: list[dict[str, str]] = []
+
+    for message in messages:
+        role = message.get("role")
+        content = message.get("content")
+        if not isinstance(content, str) or not content.strip():
+            continue
+
+        if role == "system":
+            instructions_parts.append(content)
+            continue
+
+        normalized_role = role if role in {"user", "assistant", "developer"} else "user"
+        response_input.append({"role": normalized_role, "content": content})
+
+    if not response_input:
+        raise ValueError("Responses API input is empty.")
+
+    instructions = "\n\n".join(part.strip() for part in instructions_parts if part.strip()) or None
+    if len(response_input) == 1 and response_input[0]["role"] == "user":
+        return instructions, response_input[0]["content"]
+    return instructions, response_input
+
+
+# Extract text from a Responses API result.
+def extract_response_text(response: Any) -> str:
+    output_text = getattr(response, "output_text", None)
+    if isinstance(output_text, str) and output_text.strip():
+        return output_text
+
+    response_dict = response.to_dict() if hasattr(response, "to_dict") else {}
+    parts: list[str] = []
+    for item in response_dict.get("output") or []:
+        if not isinstance(item, dict):
+            continue
+        for content_item in item.get("content") or []:
+            if not isinstance(content_item, dict):
+                continue
+            if content_item.get("type") in {"output_text", "text"} and isinstance(content_item.get("text"), str):
+                parts.append(content_item["text"])
+
+    assistant_text = "".join(parts).strip()
+    if assistant_text:
+        return assistant_text
+
+    raise RuntimeError("LLM response did not contain parseable text.")
+
+
+# Responses API call.
+def create_response_text(
     api_url: str,
     api_key: str,
     model: str,
@@ -102,61 +162,54 @@ def chat_completion(
     debug_label: str | None = None,
     debug_store: list[dict[str, Any]] | None = None,
 ) -> str:
-    payload = {
+    instructions, response_input = build_responses_payload(messages)
+    payload: dict[str, Any] = {
         "model": model,
-        "messages": messages,
+        "input": response_input,
         "temperature": temperature,
-        "stream": False,
     }
-
-    data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}",
-    }
-    req = request.Request(api_url, data=data, headers=headers, method="POST")
+    if instructions:
+        payload["instructions"] = instructions
 
     try:
-        with request.urlopen(req, timeout=timeout) as resp:
-            body = resp.read().decode("utf-8")
-    except error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"LLM HTTPError {exc.code}: {detail}") from exc
-    except error.URLError as exc:
-        raise RuntimeError(f"LLM URL error: {exc}") from exc
+        with OpenAI(base_url=api_url, api_key=api_key, timeout=float(timeout)) as client:
+            response = client.responses.create(**payload)
+    except openai.APIConnectionError as exc:
+        raise RuntimeError(f"LLM connection error: {exc}") from exc
+    except openai.APIStatusError as exc:
+        response_body = ""
+        try:
+            if exc.response is not None:
+                response_body = exc.response.text
+        except Exception:
+            response_body = ""
+        request_id = getattr(exc, "request_id", None)
+        detail = f"LLM status error {exc.status_code}"
+        if request_id:
+            detail += f" (request_id={request_id})"
+        if response_body:
+            detail += f": {response_body}"
+        raise RuntimeError(detail) from exc
+    except openai.APIError as exc:
+        raise RuntimeError(f"LLM API error: {exc}") from exc
 
-    parsed = json.loads(body)
-    choices = parsed.get("choices") or []
-    if not choices:
-        raise RuntimeError("LLM 返回中缺少 choices。")
-
-    message = choices[0].get("message") or {}
-    content = message.get("content")
-
-    if isinstance(content, str):
-        assistant_text = content
-    elif isinstance(content, list):
-        parts: list[str] = []
-        for item in content:
-            if isinstance(item, dict) and item.get("type") == "text":
-                parts.append(item.get("text", ""))
-        assistant_text = "".join(parts)
-    else:
-        raise RuntimeError("LLM 返回的 content 不是可解析文本。")
-
+    parsed = response.to_dict() if hasattr(response, "to_dict") else {}
+    assistant_text = extract_response_text(response)
     if debug_store is not None:
         debug_store.append(
             {
-                "stage": debug_label or "chat_completion",
+                "stage": debug_label or "create_response_text",
                 "request": payload,
                 "raw_response": parsed,
                 "assistant_content": assistant_text,
+                "request_id": getattr(response, "_request_id", None),
             }
         )
 
     return assistant_text
 
 
+# Classify paragraphs.
 def classify_paragraphs(
     paragraphs: list[dict[str, Any]],
     api_url: str,
@@ -187,7 +240,7 @@ def classify_paragraphs(
         indent=2,
     )
 
-    content = chat_completion(
+    content = create_response_text(
         api_url=api_url,
         api_key=api_key,
         model=model,
@@ -221,6 +274,7 @@ def classify_paragraphs(
     return classified
 
 
+# Extract fact components.
 def extract_fact_components(
     selected_paragraphs: list[dict[str, Any]],
     api_url: str,
@@ -261,7 +315,7 @@ def extract_fact_components(
         indent=2,
     )
 
-    content = chat_completion(
+    content = create_response_text(
         api_url=api_url,
         api_key=api_key,
         model=model,
@@ -295,6 +349,7 @@ def extract_fact_components(
     return extracted
 
 
+# Rewrite infringement facts.
 def rewrite_infringement_facts(
     fact_components: list[dict[str, Any]],
     source_name: str,
@@ -349,7 +404,7 @@ def rewrite_infringement_facts(
         indent=2,
     )
 
-    content = chat_completion(
+    content = create_response_text(
         api_url=api_url,
         api_key=api_key,
         model=model,
@@ -385,6 +440,7 @@ def rewrite_infringement_facts(
     return rewritten
 
 
+# Build output.
 def build_output(
     input_path: Path,
     api_url: str,
@@ -414,17 +470,25 @@ def build_output(
     return result
 
 
+# Parse args.
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Classify lawyer-letter paragraphs and rewrite infringement facts.")
     parser.add_argument("--input", required=True, help="Path to the cleaned lawyer-letter markdown file.")
     parser.add_argument("--output", help="Optional path to write JSON. Prints to stdout if omitted.")
-    parser.add_argument("--api-url", default=os.environ.get("LLM_API_URL", DEFAULT_API_URL), help="OpenAI-compatible chat completions URL.")
+    parser.add_argument(
+        "--api-url",
+        "--base-url",
+        dest="api_url",
+        default=os.environ.get("LLM_BASE_URL") or os.environ.get("LLM_API_URL", DEFAULT_API_URL),
+        help="OpenAI-compatible API base URL.",
+    )
     parser.add_argument("--api-key", default=os.environ.get("LLM_API_KEY", DEFAULT_API_KEY), help="API key for the LLM endpoint.")
     parser.add_argument("--model", default=os.environ.get("LLM_MODEL", DEFAULT_API_MODEL), help="Model name.")
     parser.add_argument("--debug", action="store_true", help="Include request and raw response details in output JSON.")
     return parser.parse_args()
 
 
+# Main.
 def main() -> int:
     args = parse_args()
     input_path = Path(args.input).expanduser().resolve()
@@ -433,7 +497,7 @@ def main() -> int:
         print(f"MISSING {input_path}", file=sys.stderr)
         return 1
     if not args.api_url:
-        print("缺少 --api-url 或环境变量 LLM_API_URL", file=sys.stderr)
+        print("缺少 --api-url/--base-url 或环境变量 LLM_BASE_URL/LLM_API_URL", file=sys.stderr)
         return 1
     if not args.api_key:
         print("缺少 --api-key 或环境变量 LLM_API_KEY", file=sys.stderr)

@@ -15,6 +15,7 @@ from independent_case_pipeline.backend.app.services.render_service import build_
 from independent_case_pipeline.backend.app.services.replace_map_service import read_json
 
 
+# Parse args.
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Convert replace_map.json to a word_replace job JSON.')
     parser.add_argument('--replace-map', required=True, help='Path to replace_map.json')
@@ -28,6 +29,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# Main.
 def main() -> int:
     args = parse_args()
     replace_map_path = Path(args.replace_map).expanduser().resolve()

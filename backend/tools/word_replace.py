@@ -54,6 +54,7 @@ class Job:
     image_settings: ImageSettings = field(default_factory=ImageSettings)
 
 
+# Parse float.
 def parse_float(value: Any) -> float | None:
     if value is None:
         return None
@@ -66,12 +67,14 @@ def parse_float(value: Any) -> float | None:
         return None
 
 
+# Resolve alignment.
 def resolve_alignment(align: str | None):
     if not align:
         return None
     return ALIGN_MAP.get(align, WD_ALIGN_PARAGRAPH.LEFT)
 
 
+# Convert DOC to DOCX.
 def convert_doc_to_docx(path: str) -> tuple[str, str | None]:
     temp_dir = tempfile.mkdtemp(prefix="word_replace_")
     target = os.path.join(temp_dir, Path(path).stem + ".docx")
@@ -114,11 +117,13 @@ def convert_doc_to_docx(path: str) -> tuple[str, str | None]:
     raise RuntimeError(f".doc 转 .docx 失败：{path}；尝试结果：{joined}")
 
 
+# Clear paragraph.
 def clear_paragraph(paragraph) -> None:
     for run in list(paragraph.runs):
         run._element.getparent().remove(run._element)
 
 
+# Copy run format.
 def _copy_run_format(source_run, target_run) -> None:
     if source_run._r.rPr is not None:
         target_run._r.insert(0, deepcopy(source_run._r.rPr))
@@ -126,6 +131,7 @@ def _copy_run_format(source_run, target_run) -> None:
         target_run.style = source_run.style
 
 
+# Insert run after.
 def _insert_run_after(run, text: str = "", format_from=None):
     paragraph = run._parent
     new_run = paragraph.add_run()
@@ -136,6 +142,7 @@ def _insert_run_after(run, text: str = "", format_from=None):
     return new_run
 
 
+# Find replacement matches.
 def _find_replacement_matches(text: str, replacements: list[Replacement]) -> list[tuple[int, int, Replacement]]:
     matches: list[tuple[int, int, Replacement]] = []
     index = 0
@@ -156,6 +163,7 @@ def _find_replacement_matches(text: str, replacements: list[Replacement]) -> lis
     return matches
 
 
+# Build run ranges.
 def _build_run_ranges(paragraph) -> list[dict[str, Any]]:
     ranges: list[dict[str, Any]] = []
     cursor = 0
@@ -168,10 +176,12 @@ def _build_run_ranges(paragraph) -> list[dict[str, Any]]:
     return ranges
 
 
+# Set run text.
 def _set_run_text(run, text: str) -> None:
     run.text = text
 
 
+# Insert images after.
 def _insert_images_after(anchor_run, rep: Replacement, image_settings: ImageSettings, paragraph_align):
     current_anchor = anchor_run
     inserted = False
@@ -198,6 +208,7 @@ def _insert_images_after(anchor_run, rep: Replacement, image_settings: ImageSett
     return current_anchor
 
 
+# Replace in paragraph.
 def replace_in_paragraph(paragraph, replacements: Iterable[Replacement], image_settings: ImageSettings, paragraph_align) -> None:
     text = paragraph.text
     if not text:
@@ -243,6 +254,7 @@ def replace_in_paragraph(paragraph, replacements: Iterable[Replacement], image_s
         _insert_images_after(anchor, rep, image_settings, paragraph_align)
 
 
+# Replace in document.
 def replace_in_document(doc, replacements: Iterable[Replacement], image_settings: ImageSettings, paragraph_align) -> None:
     for paragraph in doc.paragraphs:
         replace_in_paragraph(paragraph, replacements, image_settings, paragraph_align)
@@ -253,6 +265,7 @@ def replace_in_document(doc, replacements: Iterable[Replacement], image_settings
                     replace_in_paragraph(paragraph, replacements, image_settings, paragraph_align)
 
 
+# Process documents.
 def process_documents(job: Job) -> int:
     processed = 0
     input_dir = job.input_base_dir or (os.path.dirname(job.input_files[0]) if job.input_files else "")
@@ -299,6 +312,7 @@ def process_documents(job: Job) -> int:
     return processed
 
 
+# Load job.
 def load_job(path: Path) -> Job:
     data = json.loads(path.read_text(encoding="utf-8-sig"))
     input_files = list(data.get("input_files") or [])
@@ -348,12 +362,14 @@ def load_job(path: Path) -> Job:
     )
 
 
+# Parse args.
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Replace keywords in doc and docx files using a JSON job file.")
     parser.add_argument("--config", required=True, help="Path to the job JSON file.")
     return parser.parse_args()
 
 
+# Main.
 def main() -> int:
     args = parse_args()
     config_path = Path(args.config).expanduser().resolve()

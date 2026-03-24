@@ -14,11 +14,13 @@ from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
 
+# Disable HF symlinks.
 def disable_hf_symlinks() -> None:
     os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
     hf_file_download.are_symlinks_supported = lambda cache_dir=None: False
 
 
+# Build docling converter.
 def build_docling_converter() -> DocumentConverter:
     pipeline_options = PdfPipelineOptions()
     pipeline_options.do_ocr = True
@@ -32,11 +34,13 @@ def build_docling_converter() -> DocumentConverter:
     )
 
 
+# Convert with docling.
 def convert_with_docling(converter: DocumentConverter, pdf_path: Path) -> str:
     result = converter.convert(str(pdf_path))
     return result.document.export_to_markdown()
 
 
+# Failure markdown.
 def failure_markdown(pdf_path: Path, exc: Exception) -> str:
     return "\n".join(
         [
@@ -53,6 +57,7 @@ def failure_markdown(pdf_path: Path, exc: Exception) -> str:
     )
 
 
+# Ensure non empty.
 def ensure_non_empty(markdown: str, pdf_path: Path) -> str:
     if markdown.strip():
         return markdown
@@ -68,11 +73,13 @@ def ensure_non_empty(markdown: str, pdf_path: Path) -> str:
     )
 
 
+# Write output.
 def write_output(output_path: Path, content: str) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(content, encoding="utf-8")
 
 
+# Main.
 def main() -> int:
     parser = argparse.ArgumentParser(description="Convert PDFs to Markdown with docling.")
     parser.add_argument("pdfs", nargs="+", help="One or more PDF files to process.")

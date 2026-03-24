@@ -1,4 +1,4 @@
-"""Run the end-to-end workflow from PDFs to extracted JSON and rendered Word output."""
+﻿"""Run the end-to-end workflow from PDFs to extracted JSON and rendered Word output."""
 
 from __future__ import annotations
 
@@ -30,6 +30,7 @@ from independent_case_pipeline.backend.app.services.render_service import build_
 from independent_case_pipeline.backend.app.services.replace_map_service import build_replace_map, write_replace_map
 
 
+# Parse args.
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Full pipeline: PDFs -> Defandent/DemandLetter/logical -> replace_map -> rendered Word.')
     parser.add_argument('--case-name', required=True)
@@ -55,6 +56,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# Run full pipeline.
 def run_full_pipeline(*, case_name: str, lawyer_letter_pdf: str | Path, enterprise_report_pdf: str | Path, template: str | Path, cases_root: str | Path = DEFAULT_CASES_ROOT, replace_map_config: str | Path = DEFAULT_REPLACE_MAP_CONFIG, logical_rules_config: str | Path = DEFAULT_LOGICAL_RULES_CONFIG, rules: str | Path | None = None, trim_last_page_for_lawyer_letter: bool = DEFAULT_TRIM_LAST_PAGE_FOR_LAWYER_LETTER, write_intermediate_jsons: bool = DEFAULT_WRITE_INTERMEDIATE_JSONS, debug: bool = DEFAULT_DEBUG, api_url: str = DEFAULT_API_URL, api_key: str = DEFAULT_API_KEY, model: str = DEFAULT_API_MODEL, target_keyword: str = DEFAULT_TARGET_KEYWORD, image_align: str | None = DEFAULT_IMAGE_ALIGN, image_width_cm: float | None = DEFAULT_IMAGE_WIDTH_CM, image_height_cm: float | None = DEFAULT_IMAGE_HEIGHT_CM, replace_map_overrides: dict[str, Any] | None = None) -> dict[str, Any]:
     started_at = time.time()
     template_path = Path(template).expanduser().resolve()
@@ -93,7 +95,7 @@ def run_full_pipeline(*, case_name: str, lawyer_letter_pdf: str | Path, enterpri
 
     copied_template = copy_input_file(template_path, input_dir)
     output_name = sanitize_output_stem(
-        str((extract_result['Defandent'].get('浼佷笟鍚嶇О') or [{}])[0].get('value') or ''),
+        str((extract_result['Defandent'].get('名称') or [{}])[0].get('value') or ''),
         copied_template.stem,
     )
 
@@ -155,6 +157,7 @@ def run_full_pipeline(*, case_name: str, lawyer_letter_pdf: str | Path, enterpri
     return manifest
 
 
+# Main.
 def main() -> int:
     args = parse_args()
     try:
@@ -191,4 +194,5 @@ def main() -> int:
 
 if __name__ == '__main__':
     raise SystemExit(main())
+
 

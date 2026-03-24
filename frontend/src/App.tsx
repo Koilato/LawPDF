@@ -1,8 +1,9 @@
-import {
+﻿import {
   ApiOutlined,
   CheckCircleOutlined,
   PlayCircleOutlined,
   ReloadOutlined,
+  SaveOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
 import {
@@ -19,7 +20,7 @@ import {
   theme,
 } from 'antd';
 import { useEffect, useMemo, useState, useTransition } from 'react';
-import { extractCaseData, fetchBackendSettings, renderWordDocument } from './api';
+import { extractCaseData, fetchBackendSettings, renderWordDocument, saveBackendSettings } from './api';
 import { FileInputPanel } from './components/FileInputPanel';
 import { JsonEditorCard } from './components/JsonEditorCard';
 import { OutputPanel } from './components/OutputPanel';
@@ -80,6 +81,7 @@ function AppShell() {
   );
   const [isExtracting, setIsExtracting] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [logs, setLogs] = useState<LogItem[]>([
     createLog('info', '工作台已启动，正在等待连接本地后端。'),
   ]);
@@ -148,6 +150,23 @@ function AppShell() {
     }
   };
 
+  const handleSaveSettings = async () => {
+    setIsSavingSettings(true);
+    appendLog('info', '正在保存后端运行设置。');
+
+    try {
+      const nextSettings = await saveBackendSettings(settings);
+      setSettings(nextSettings);
+      appendLog('success', '后端运行设置已保存。');
+      messageApi.success('设置已保存');
+    } catch (error) {
+      const text = error instanceof Error ? error.message : '保存设置失败';
+      appendLog('error', `保存设置失败：${text}`);
+      messageApi.error(text);
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
   const handleExtract = async () => {
     if (!selectedFiles.enterpriseReportPdf || !selectedFiles.lawyerLetterPdf) {
       messageApi.warning('请先上传企业报告 PDF 和律师函 PDF');
@@ -161,7 +180,6 @@ function AppShell() {
     try {
       const result = await extractCaseData({
         files: selectedFiles,
-        settings,
         replaceMapConfigText,
         caseName: caseName || undefined,
       });
@@ -220,7 +238,6 @@ function AppShell() {
       const result = await renderWordDocument({
         caseName,
         replaceMap: currentReplaceMap,
-        settings,
         templateFilePath,
         templateFile: templateFilePath ? null : selectedFiles.templateFile,
       });
@@ -283,7 +300,7 @@ function AppShell() {
     };
   }, []);
 
-  const isWorking = isExtracting || isRendering || isPending;
+  const isWorking = isExtracting || isRendering || isSavingSettings || isPending;
 
   return (
     <ConfigProvider
@@ -318,6 +335,9 @@ function AppShell() {
               </Tag>
               <Button icon={<ReloadOutlined />} onClick={() => regenerateReplaceMap()} disabled={isWorking}>
                 刷新 replace_map
+              </Button>
+              <Button icon={<SaveOutlined />} onClick={() => void handleSaveSettings()} loading={isSavingSettings}>
+                保存设置
               </Button>
               <Button type="default" icon={<PlayCircleOutlined />} onClick={() => void handleExtract()} loading={isExtracting}>
                 执行抽取
@@ -416,3 +436,4 @@ function AppShell() {
 }
 
 export default AppShell;
+
